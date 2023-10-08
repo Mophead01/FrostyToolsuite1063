@@ -9,6 +9,9 @@ using FrostySdk.Interfaces;
 using FrostySdk.IO;
 using FrostySdk.Managers;
 using Frosty.Core.Mod;
+using System.Linq;
+using FrostySdk.Ebx;
+using System.Windows.Input;
 
 namespace Frosty.Core
 {
@@ -52,6 +55,8 @@ namespace Frosty.Core
         private List<string> m_thirdPartyDlls = new List<string>();
 
         private Dictionary<string, Type> m_typeOverrides = new Dictionary<string, Type>();
+        private Dictionary<(string, int), Type> m_childTypeOverridesPriority = new Dictionary<(string, int), Type>();
+        private Dictionary<string, Type> m_subTypeOverrides = new Dictionary<string, Type>();
 
         private List<string> m_userShaders = new List<string>();
 
@@ -201,10 +206,17 @@ namespace Frosty.Core
         /// <returns>The <see cref="Type"/> of the type override.</returns>
         public Type GetTypeOverride(string lookupName)
         {
-            lookupName = lookupName.ToLower();
-            if (!m_typeOverrides.ContainsKey(lookupName))
-                return null;
-            return m_typeOverrides[lookupName];
+            if (m_typeOverrides.ContainsKey(lookupName.ToLower()))
+                return m_typeOverrides[lookupName.ToLower()];
+
+            foreach(KeyValuePair<string, Type> pair in m_subTypeOverrides)
+            {
+                if (TypeLibrary.IsSubClassOf(lookupName, pair.Key))
+                {
+                    return m_typeOverrides[pair.Key.ToLower()];
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -437,6 +449,12 @@ namespace Frosty.Core
                     else if (tmpAttr is RegisterTypeOverrideAttribute attr4)
                     {
                         m_typeOverrides.Add(attr4.LookupName.ToLower(), attr4.EditorType);
+                        if (attr4.ApplyToChildClasses)
+                        {
+                            m_childTypeOverridesPriority.Add((attr4.LookupName, attr4.Priority), attr4.EditorType);
+                            m_subTypeOverrides = m_childTypeOverridesPriority.OrderByDescending(item => item.Key.Item2).ToDictionary(item => item.Key.Item1, item => item.Value);
+                        }
+
                     }
                     else if (tmpAttr is RegisterGlobalTypeEditorAttribute attr3)
                     {

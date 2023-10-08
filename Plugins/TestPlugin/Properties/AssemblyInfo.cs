@@ -99,5 +99,5 @@ using TestPlugin.TypeOverrides;
 
 [assembly: RegisterCustomAssetManager("fs", typeof(FsFileManager))]
 
-[assembly: RegisterTypeOverride("UnlockDataCollection", typeof(UnlockDataCollectionTypeOverride))]
-[assembly: RegisterTypeOverride("SubWorldReferenceObjectData", typeof(SubworldTypeOverride))]
+//[assembly: RegisterTypeOverride("UnlockDataCollection", typeof(UnlockDataCollectionTypeOverride))]
+//[assembly: RegisterTypeOverride("SubWorldReferenceObjectData", typeof(SubworldTypeOverride))]

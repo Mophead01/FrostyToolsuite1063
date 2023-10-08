@@ -27,7 +27,7 @@ using System.Windows;
 
 [assembly: RegisterOptionsExtension(typeof(SoundOptions))]
 
-[assembly: RegisterTypeOverride("SoundWaveAsset", typeof(SoundWaveAssetOverride))]
+[assembly: RegisterTypeOverride("SoundWaveAsset", typeof(SoundWaveAssetOverride), false, 0)]
 
 [assembly: RegisterAssetDefinition("SoundWaveAsset", typeof(SoundWaveAssetDefinition))]
 [assembly: RegisterAssetDefinition("NewWaveAsset", typeof(NewWaveAssetDefinition))]
