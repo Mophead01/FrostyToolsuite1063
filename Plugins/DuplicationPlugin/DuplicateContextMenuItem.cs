@@ -14,10 +14,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 
 namespace DuplicationPlugin
@@ -634,7 +636,6 @@ namespace DuplicationPlugin
             public override RelayCommand ContextItemClicked => new RelayCommand((o) =>
             {
                 EbxAssetEntry entry = App.SelectedAsset as EbxAssetEntry;
-                EbxAsset asset = App.AssetManager.GetEbx(entry);
 
                 DuplicateAssetWindow win = new DuplicateAssetWindow(entry);
                 if (win.ShowDialog() == false)
@@ -644,32 +645,164 @@ namespace DuplicationPlugin
                 newName = newName.Trim('/');
 
                 Type newType = win.SelectedType;
-                FrostyTaskWindow.Show("Duplicating asset", "", (task) =>
+                if (win.IsToBeRenamed == false)
                 {
-                    if (!MeshVariationDb.IsLoaded)
-                        MeshVariationDb.LoadVariations(task);
-
-                    try
+                    FrostyTaskWindow.Show("Duplicating asset", "", (task) =>
                     {
-                        string key = "null";
-                        foreach (string typekey in extensions.Keys)
+                        if (!MeshVariationDb.IsLoaded)
+                            MeshVariationDb.LoadVariations(task);
+
+                        try
                         {
-                            if (TypeLibrary.IsSubClassOf(entry.Type, typekey))
+                            string key = "null";
+                            foreach (string typekey in extensions.Keys)
                             {
-                                key = typekey;
-                                break;
+                                if (TypeLibrary.IsSubClassOf(entry.Type, typekey))
+                                {
+                                    key = typekey;
+                                    break;
+                                }
+                            }
+
+                            task.Update("Duplicating asset...");
+                            extensions[key].DuplicateAsset(entry, newName, newType != null, newType);
+                        }
+                        catch (Exception e)
+                        {
+                            App.Logger.Log($"Failed to duplicate {entry.Name}");
+                        }
+                    });
+                }
+                else
+                {
+                    string OldName = entry.Name;
+                    newName = newName.Trim('/');
+                    FrostyTaskWindow.Show("Renaming asset", "", (task) =>
+                    {
+                        EbxAsset asset = App.AssetManager.GetEbx(entry);
+                        List<int> bundles = entry.EnumerateBundles().ToList();
+                        List<AssetEntry> linkedAssets = entry.LinkedAssets.ToList();
+                        EbxAsset newAsset = null;
+                        using (EbxBaseWriter writer = EbxBaseWriter.CreateWriter(new MemoryStream(), EbxWriteFlags.DoNotSort | EbxWriteFlags.IncludeTransient))
+                        {
+                            writer.WriteAsset(asset);
+                            byte[] buf = writer.ToByteArray();
+                            try
+                            {
+                                using (EbxReader reader = EbxReader.CreateReader(new MemoryStream(buf)))
+                                    newAsset = reader.ReadAsset<EbxAsset>();
+                            }
+                            catch
+                            {
+                                newAsset = null;
+                                App.Logger.Log("Error reading " + entry.Name + ". Please try again");
                             }
                         }
+                        if (newAsset != null)
+                        {
+                            dynamic obj = newAsset.RootObject;
+                            obj.Name = newName;
+                            App.AssetManager.RevertAsset(entry);
+                            if (App.AssetManager.GetEbxEntry(newAsset.FileGuid) != null)
+                            {
+                                App.Logger.Log(OldName + " has the same external guid as " + App.AssetManager.GetEbxEntry(newAsset.FileGuid).Name + ", randomising external and internal guid.");
+                                newAsset.SetFileGuid(Guid.NewGuid());
+                                AssetClassGuid guid = new AssetClassGuid(Utils.GenerateDeterministicGuid(newAsset.Objects, (Type)obj.GetType(), newAsset.FileGuid), -1);
+                                obj.SetInstanceGuid(guid);
+                            }
+                            EbxAssetEntry newEntry =  App.AssetManager.AddEbx(newName, newAsset);
+                            foreach(int bunId in bundles)
+                                newEntry.AddToBundle(bunId);
+                            foreach (AssetEntry linkedAsset in linkedAssets)
+                                newEntry.LinkAsset(linkedAsset);
+                            App.Logger.Log(OldName + " has been renamed to " + newName);
+                        }
+                        foreach(string bunName in new List<string> { "win32/" + OldName, "win32/" + OldName.ToLower()})
+                        {
+                            int bunId = App.AssetManager.GetBundleId(bunName);
+                            if (bunId != -1 && App.AssetManager.GetBundleEntry(bunId).Added)
+                                App.AssetManager.GetBundleEntry(bunId).Name = "win32/" + newName;
 
-                        task.Update("Duplicating asset...");
-                        extensions[key].DuplicateAsset(entry, newName, newType != null, newType);
-                    }
-                    catch (Exception e)
+                        }
+                    });
+                }
+                App.EditorWindow.DataExplorer.RefreshAll();
+            });
+        }
+        public class FilterTypeContextMenuItem : DataExplorerContextMenuExtension
+        {
+            public override string ContextItemName => "Copy Type";
+
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyCore;Component/Images/Copy.png") as ImageSource;
+
+            public override RelayCommand ContextItemClicked => new RelayCommand((o) =>
+            {
+                EbxAssetEntry entry = App.SelectedAsset as EbxAssetEntry;
+                try
+                {
+                    Clipboard.SetText("type:" + entry.Type);
+                    App.Logger.Log("Copied type:" + entry.Type + " to clipboard");
+                }
+                catch 
+                {
+                    App.Logger.LogWarning("Could not set Clipboard value. Please retry");
+                }
+            });
+        }
+
+        public static EbxAssetEntry copyEntry = null;
+
+        public class CopyDataContextMenuItem : DataExplorerContextMenuExtension
+        {
+            public override string ContextItemName => "Copy Data";
+
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyCore;Component/Images/Copy.png") as ImageSource;
+
+            public override RelayCommand ContextItemClicked => new RelayCommand((o) =>
+            {
+                copyEntry = App.SelectedAsset as EbxAssetEntry;
+            });
+        }
+
+        public class PasteDataContextMenuItem : DataExplorerContextMenuExtension
+        {
+            public override string ContextItemName => "Paste Data";
+
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyCore;Component/Images/Paste.png") as ImageSource;
+
+            public override RelayCommand ContextItemClicked => new RelayCommand((o) =>
+            {
+                EbxAssetEntry pasteEntry = App.SelectedAsset as EbxAssetEntry;
+                if (copyEntry == null)
+                    App.Logger.LogError("No asset data to copy");
+                else if (pasteEntry == null)
+                    App.Logger.LogError("No asset select to paste upon");
+                else if (pasteEntry.Type != copyEntry.Type)
+                    App.Logger.LogError(String.Format("Cannot paste a {0} over a {1}", copyEntry.Type, pasteEntry.Type));
+                else
+                {
+                    EbxAsset copyAsset = App.AssetManager.GetEbx(copyEntry);
+                    EbxAsset pasteAsset = App.AssetManager.GetEbx(pasteEntry);
+                    Guid rootGuid = pasteAsset.RootInstanceGuid;
+                    using (EbxBaseWriter writer = EbxBaseWriter.CreateWriter(new MemoryStream(), EbxWriteFlags.DoNotSort | EbxWriteFlags.IncludeTransient))
                     {
-                        App.Logger.Log($"Failed to duplicate {entry.Name}");
+                        writer.WriteAsset(copyAsset);
+                        byte[] buf = writer.ToByteArray();
+                        try
+                        {
+                            using (EbxReader reader = EbxReader.CreateReader(new MemoryStream(buf)))
+                                pasteAsset = reader.ReadAsset<EbxAsset>();
+                        }
+                        catch
+                        {
+                            App.Logger.Log("Error copying " + copyEntry.Name + ". Please try again");
+                        }
                     }
-                });
-
+                    pasteAsset.SetFileGuid(pasteEntry.Guid);
+                    ((dynamic)pasteAsset.RootObject).Name = pasteEntry.Name;
+                    ((dynamic)pasteAsset.RootObject).SetInstanceGuid(new AssetClassGuid(rootGuid, -1) { });
+                    App.AssetManager.ModifyEbx(pasteEntry.Name, pasteAsset);
+                }
                 App.EditorWindow.DataExplorer.RefreshAll();
             });
         }
