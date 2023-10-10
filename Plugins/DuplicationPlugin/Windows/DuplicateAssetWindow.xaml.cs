@@ -20,17 +20,22 @@ namespace DuplicationPlugin.Windows
         public string SelectedPath { get; private set; } = "";
         public string SelectedName { get; private set; } = "";
         public Type SelectedType { get; private set; } = null;
+        public bool IsToBeRenamed { get; private set; } = false;
         private EbxAssetEntry entry;
 
         public DuplicateAssetWindow(EbxAssetEntry currentEntry)
         {
             InitializeComponent();
-
             pathSelector.ItemsSource = App.AssetManager.EnumerateEbx();
             entry = currentEntry;
 
             assetNameTextBox.Text = currentEntry.Filename;
             assetTypeTextBox.Text = entry.Type;
+
+            if (!entry.IsAdded)
+            {
+                renameButton.Visibility = Visibility.Hidden;
+            }
         }
 
         private void AssetNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -49,7 +54,7 @@ namespace DuplicationPlugin.Windows
             string tmp = assetNameTextBox.Text.Replace('\\', '/').Trim('/');
             string fullName = pathSelector.SelectedPath + "/" + tmp;
 
-            if (!string.IsNullOrEmpty(assetNameTextBox.Text) && !entry.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(assetNameTextBox.Text) && App.AssetManager.GetEbxEntry(fullName) == null)
             {
                 if (!tmp.Contains("//"))
                 {
@@ -57,6 +62,33 @@ namespace DuplicationPlugin.Windows
                     SelectedPath = pathSelector.SelectedPath;
 
                     DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    FrostyMessageBox.Show("Name of asset is invalid", "Frosty Editor");
+                }
+            }
+            else
+            {
+                FrostyMessageBox.Show("Name of asset must be unique", "Frosty Editor");
+            }
+        }
+
+        private void RenameButton_Click(object sender, RoutedEventArgs e)
+        {
+            string tmp = assetNameTextBox.Text.Replace('\\', '/').Trim('/');
+            string fullName = pathSelector.SelectedPath + "/" + tmp;
+
+            if (!string.IsNullOrEmpty(assetNameTextBox.Text) && (App.AssetManager.GetEbxEntry(fullName) == null || entry.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase)))
+            {
+                if (!tmp.Contains("//"))
+                {
+                    SelectedName = tmp;
+                    SelectedPath = pathSelector.SelectedPath;
+
+                    DialogResult = true;
+                    IsToBeRenamed = true;
                     Close();
                 }
                 else

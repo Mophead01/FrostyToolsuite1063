@@ -28,3 +28,6 @@ using static DuplicationPlugin.DuplicationTool;
 [assembly: PluginVersion("1.0.0.0")]
 
 [assembly: RegisterDataExplorerContextMenu(typeof(DuplicateContextMenuItem))]
+[assembly: RegisterDataExplorerContextMenu(typeof(DuplicationTool.FilterTypeContextMenuItem))]
+[assembly: RegisterDataExplorerContextMenu(typeof(DuplicationTool.CopyDataContextMenuItem))]
+[assembly: RegisterDataExplorerContextMenu(typeof(DuplicationTool.PasteDataContextMenuItem))]
