@@ -80,7 +80,6 @@ namespace FrostyModManager
                 writer.WriteLine($"{exp.Message}\r\n\r\n{exp.StackTrace}");
 
             FrostyExceptionBox.Show(exp, "Frosty Mod Manager");
-            Environment.Exit(0);
         }
 
         private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
