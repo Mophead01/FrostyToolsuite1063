@@ -141,6 +141,12 @@ namespace Frosty.Core.Windows
         [EbxFieldMeta(EbxFieldType.Boolean)]
         public string CommandLineArgs { get; set; } = "";
 
+        [Category("General")]
+        [DisplayName("Use folder fbproject system")]
+        [Description("Stores all modifications in a real file system based in a directory of the same name as the fbproject")]
+        [EbxFieldMeta(EbxFieldType.Boolean)]
+        public bool FbprojectFolderSystem { get; set; } = false;
+
         public override void Load()
         {
             List<string> langs = GetLocalizedLanguages();
@@ -184,10 +190,12 @@ namespace Frosty.Core.Windows
 
             //AssetDisplayModuleInId = Config.Get<bool>("Asset", "DisplayModuleInId", true);
             //RememberChoice = Config.Get<bool>("Init", "RememberChoice", false);
+            FbprojectFolderSystem = Config.Get<bool>("FbprojectFolderSystem", false);
         }
 
         public override void Save()
         {
+            Config.Add("FbprojectFolderSystem", FbprojectFolderSystem);
             Config.Add("AutosaveEnabled", AutosaveEnabled);
             Config.Add("AutosavePeriod", AutosavePeriod);
             Config.Add("AutosaveMaxCount", AutosaveMaxSaves);
