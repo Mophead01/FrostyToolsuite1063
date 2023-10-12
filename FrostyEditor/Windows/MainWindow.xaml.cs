@@ -583,7 +583,7 @@ namespace FrostyEditor
             m_autoSaveTimer?.Stop();
             if (SaveProject(true))
             {
-                FrostyTaskWindow.Show("Saving Project", m_project.Filename, (task) => m_project.Save());
+                FrostyTaskWindow.Show("Saving Project", m_project.Filename, (task) => m_project.Save("", true, true));
 
                 AddRecentProject(m_project.Filename);
 
@@ -607,35 +607,30 @@ namespace FrostyEditor
             RemoveAllTabs();
 
             FrostyProject newProject = null;
-            FrostyTaskWindow.Show("Loading Project", "", (task) =>
+            if (saveProject)
             {
-                if (saveProject)
+                m_project.Save();
+                App.Logger.Log("Project saved to {0}", m_project.Filename);
+            }
+
+            // clear all modifications
+            App.AssetManager.Reset();
+            App.WhitelistedBundles.Clear();
+
+            // load project
+            newProject = new FrostyProject();
+            if (!newProject.Load(filename))
+            {
+                if (ProfilesLibrary.DataVersion != newProject.gameVersion) //user loaded project for different game
                 {
-                    m_project.Save();
-                    App.Logger.Log("Project saved to {0}", m_project.Filename);
+                    App.Logger.LogWarning("Project {0} is not for {1}.", filename, ProfilesLibrary.DisplayName);
                 }
-
-                task.Update(filename);
-
-                // clear all modifications
-                App.AssetManager.Reset();
-                App.WhitelistedBundles.Clear();
-
-                // load project
-                newProject = new FrostyProject();
-                if (!newProject.Load(filename))
+                else //corrupt or not a frosty project
                 {
-                    if (ProfilesLibrary.DataVersion != newProject.gameVersion) //user loaded project for different game
-                    {
-                        App.Logger.LogWarning("Project {0} is not for {1}.", filename, ProfilesLibrary.DisplayName);
-                    }
-                    else //corrupt or not a frosty project
-                    {
-                        App.Logger.LogWarning("Failed to load {0}", filename);
-                    }
-                    newProject = null;
+                    App.Logger.LogWarning("Failed to load {0}", filename);
                 }
-            });
+                newProject = null;
+            }
 
             if (newProject != null)
             {
