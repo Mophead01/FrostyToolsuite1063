@@ -89,7 +89,6 @@ namespace FrostyEditor
                 writer.WriteLine($"{exp.Message}\r\n\r\n{exp.StackTrace}");
 
             FrostyExceptionBox.Show(exp, "Frosty Editor");
-            Environment.Exit(0);
         }
 
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
