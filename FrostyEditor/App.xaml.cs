@@ -61,11 +61,9 @@ namespace FrostyEditor
             Exit += Application_Exit;
 
 #if FROSTY_DEVELOPER
-            Version += " (Developer)";
-#elif FROSTY_ALPHA
-            Version += $" (ALPHA {Frosty.Core.App.Version})";
-#elif FROSTY_BETA
-            Version += $" (BETA {Frosty.Core.App.Version})";
+            Version += " (SWBF2 Script Extender - Developer Mode)";
+#else
+            Version += $" (SWBF2 Script Extender v1.0.0)";
 #endif
         }
 
