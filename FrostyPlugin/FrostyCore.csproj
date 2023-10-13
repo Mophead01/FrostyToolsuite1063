@@ -131,6 +131,7 @@
     <Compile Include="Attributes\RegisterStartupActionAttribute.cs" />
     <Compile Include="Attributes\RegisterTabExtensionAttribute.cs" />
     <Compile Include="Attributes\RegisterThirdPartyDllAttribute.cs" />
+    <Compile Include="Attributes\RegisterPointerRefIdOverrideAttribute.cs" />
     <Compile Include="Attributes\RegisterTypeOverrideAttribute.cs" />
     <Compile Include="Attributes\RegisterUserShaderAttribute.cs" />
     <Compile Include="Controls\FrostyExceptionBox.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="Converters\VisibilityToBooleanConverter.cs" />
     <Compile Include="Extensions\DataExplorerContextMenuExtension.cs" />
     <Compile Include="Extensions\ExecutionAction.cs" />
+    <Compile Include="Extensions\PrIdExtension.cs" />
     <Compile Include="Extensions\StartupAction.cs" />
     <Compile Include="FrostyConfiguration.cs" />
     <Compile Include="FrostyLogger.cs" />

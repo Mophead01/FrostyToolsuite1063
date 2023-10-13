@@ -60,6 +60,8 @@ namespace Frosty.Core
 
         private List<string> m_userShaders = new List<string>();
 
+        private Dictionary<string, PrIdExtension> m_pridOverrides = new Dictionary<string, PrIdExtension>();
+
         /// <summary>
         /// Retrieves a collection of data explorer context menu item extensions that have been loaded from plugins.
         /// </summary>
@@ -217,6 +219,14 @@ namespace Frosty.Core
                 }
             }
             return null;
+        }
+
+        public string GetPointerRefIdOverride(dynamic objData, bool applySizeLimit)
+        {
+            string lookupName = objData.GetType().Name.ToLower();
+            if (!m_pridOverrides.ContainsKey(lookupName))
+                return "";
+            return ((PrIdExtension)m_pridOverrides[lookupName]).GetOverrideString(objData);
         }
 
         /// <summary>
@@ -463,6 +473,10 @@ namespace Frosty.Core
                     else if (tmpAttr is RegisterStartupActionAttribute attr2)
                     {
                         m_startupActions.Add((StartupAction)Activator.CreateInstance(attr2.StartupActionType));
+                    }
+                    else if (tmpAttr is RegisterPointerRefIdOverrideAttribute attr5)
+                    {
+                        m_pridOverrides.Add(attr5.LookupName.ToLower(), (PrIdExtension)Activator.CreateInstance(attr5.PrIdType));
                     }
                 }
                 else if (loadType == PluginLoadType.Initialize)
