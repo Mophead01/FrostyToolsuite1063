@@ -57,6 +57,15 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack">
+      <HintPath>..\..\FrostyEditor\ThirdParty\Microsoft.WindowsAPICodePack.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell">
+      <HintPath>..\..\FrostyEditor\ThirdParty\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
     <Resource Include="Images\EbxToXml.png" />
   </ItemGroup>
 </Project>
