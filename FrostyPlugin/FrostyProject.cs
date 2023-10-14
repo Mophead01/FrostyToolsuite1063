@@ -2059,6 +2059,7 @@ namespace Frosty.Core
                     ModifiedEntry.LogicalSize = chkEntry.ModifiedEntry.LogicalSize;
                     ModifiedEntry.RangeStart = chkEntry.ModifiedEntry.RangeStart;
                     ModifiedEntry.RangeEnd = chkEntry.ModifiedEntry.RangeEnd;
+                    ModifiedEntry.FirstMip = chkEntry.ModifiedEntry.FirstMip;
                     ModifiedEntry.H32 = chkEntry.ModifiedEntry.H32;
                     ModifiedEntry.AddToChunkBundle = chkEntry.ModifiedEntry.AddToChunkBundle;
                     ModifiedEntry.UserData = chkEntry.ModifiedEntry.UserData;
