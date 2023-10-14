@@ -202,6 +202,7 @@ namespace Frosty.ModSupport
 
         private HashSet<string> ebxWithUnmodifiedData = new HashSet<string>();
         private HashSet<string> resWithUnmodifiedData = new HashSet<string>();
+        public static object forLock = new object();
 
         private ConcurrentDictionary<Sha1, ArchiveInfo> archiveData = new ConcurrentDictionary<Sha1, ArchiveInfo>();
         private int numArchiveEntries = 0;
@@ -282,8 +283,11 @@ namespace Frosty.ModSupport
 
                     if (resource.IsModified || !modifiedEbx.ContainsKey(resource.Name))
                     {
-                        if (!resource.IsModified )
-                            ebxWithUnmodifiedData.Add(resource.Name);
+                        lock(forLock)
+                        {
+                            if (!resource.IsModified)
+                                ebxWithUnmodifiedData.Add(resource.Name);
+                        }
 
                         if (resource.HasHandler)
                         {
@@ -296,10 +300,11 @@ namespace Frosty.ModSupport
                             }
                             else
                             {
-
-                                if (ebxWithUnmodifiedData.Contains(resource.Name))
-                                    ebxWithUnmodifiedData.Remove(resource.Name);
-
+                                lock(forLock)
+                                {
+                                    if (ebxWithUnmodifiedData.Contains(resource.Name))
+                                        ebxWithUnmodifiedData.Remove(resource.Name);
+                                }
                                 entry = new EbxAssetEntry();
                                 extraData = new HandlerExtraData();
 
@@ -340,9 +345,12 @@ namespace Frosty.ModSupport
                                 if (existingEntry.Sha1 == resource.Sha1)
                                     goto label_add_bundles;
 
-                                if (ebxWithUnmodifiedData.Contains(resource.Name))
-                                    ebxWithUnmodifiedData.Remove(resource.Name);
-
+                                lock(forLock)
+                                {
+                                    if (ebxWithUnmodifiedData.Contains(resource.Name))
+                                        ebxWithUnmodifiedData.Remove(resource.Name);
+                                }
+                                
                                 if (!archiveData.ContainsKey(existingEntry.Sha1))
                                 {
                                     return;
@@ -393,7 +401,12 @@ namespace Frosty.ModSupport
                     if (resource.IsModified || !modifiedRes.ContainsKey(resource.Name))
                     {
                         if (!resource.IsModified)
-                            resWithUnmodifiedData.Add(resource.Name);
+                        {
+                            lock (forLock)
+                            {
+                                resWithUnmodifiedData.Add(resource.Name);
+                            }
+                        }
                         if (resource.HasHandler)
                         {
                             HandlerExtraData extraData;
@@ -405,9 +418,11 @@ namespace Frosty.ModSupport
                             }
                             else
                             {
-
-                                if (resWithUnmodifiedData.Contains(resource.Name))
-                                    resWithUnmodifiedData.Remove(resource.Name);
+                                lock (forLock)
+                                {
+                                    if (resWithUnmodifiedData.Contains(resource.Name))
+                                        resWithUnmodifiedData.Remove(resource.Name);
+                                }
 
                                 entry = new ResAssetEntry();
                                 extraData = new HandlerExtraData();
@@ -446,8 +461,11 @@ namespace Frosty.ModSupport
                                 if (existingEntry.Sha1 == resource.Sha1)
                                     goto label_add_bundles;
 
-                                if (resWithUnmodifiedData.Contains(resource.Name))
-                                    resWithUnmodifiedData.Remove(resource.Name);
+                                lock (forLock)
+                                {
+                                    if (resWithUnmodifiedData.Contains(resource.Name))
+                                        resWithUnmodifiedData.Remove(resource.Name);
+                                }
 
                                 if (!archiveData.ContainsKey(existingEntry.Sha1))
                                 {
