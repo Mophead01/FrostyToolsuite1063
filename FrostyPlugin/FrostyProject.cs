@@ -15,6 +15,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Frosty.Core.Windows;
 using System.Globalization;
+using static Frosty.Core.FrostyProject;
+using System.Xml.Linq;
 
 namespace Frosty.Core
 {
@@ -112,13 +114,11 @@ namespace Frosty.Core
                 Directory.CreateDirectory(fi.DirectoryName);
             }
 
-            bool saveUsingFolderSystem = Config.Get<bool>("FbprojectFolderSystem", false);
+            bool saveUsingFolderSystem = Config.Get<bool>("FbprojectFolderSystem", false) && updateDirtyState;
 
 
             if (!saveUsingFolderSystem)
             {
-
-
                 // save to temporary file first
                 string tempFilename = fi.FullName + ".tmp";
 
@@ -1275,6 +1275,11 @@ namespace Frosty.Core
                         {
                             BundleJson bunJson = JsonConvert.DeserializeObject<BundleJson>(File.ReadAllText(file + ".json"));
                             string bunName = file.Substring(bundleFolder.Length).Replace("\\", "/");
+                            if (bunJson.OriginalName != null && bunName.ToLower() == bunJson.OriginalName.ToLower() && bunName != bunJson.OriginalName)
+                            {
+                                App.Logger.Log($"{bunName}-{bunJson.OriginalName}");
+                                bunName = bunJson.OriginalName;
+                            }
                             int bId = App.AssetManager.GetBundleId(bunName);
                             if (bId == -1)
                             {
@@ -1301,6 +1306,11 @@ namespace Frosty.Core
                         {
                             EbxJson ebxJson = JsonConvert.DeserializeObject<EbxJson>(File.ReadAllText(file + ".json"));
                             string ebxName = file.Substring(ebxFolder.Length).Replace("\\", "/");
+                            if (ebxJson.OriginalName != null && ebxName.ToLower() == ebxJson.OriginalName.ToLower() && ebxName != ebxJson.OriginalName)
+                            {
+                                App.Logger.Log($"{ebxName}-{ebxJson.OriginalName}");
+                                ebxName = ebxJson.OriginalName;
+                            }
                             EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(ebxName);
 
                             if (refEntry == null)
@@ -1349,6 +1359,11 @@ namespace Frosty.Core
                         {
                             ResJson resJson = JsonConvert.DeserializeObject<ResJson>(File.ReadAllText(file + ".json"));
                             string resName = file.Substring(resFolder.Length).Replace("\\", "/");
+                            if (resJson.OriginalName != null && resName.ToLower() == resJson.OriginalName.ToLower() && resName != resJson.OriginalName)
+                            {
+                                App.Logger.Log($"{resName}-{resJson.OriginalName}");
+                                resName = resJson.OriginalName;
+                            }
                             ResAssetEntry resEntry = App.AssetManager.GetResEntry(resName);
 
                             if (resEntry == null)
@@ -1913,6 +1928,7 @@ namespace Frosty.Core
 
         public class BundleJson
         {
+            public string OriginalName;
             public string SuperBundle;
             public BundleType BundleType;
             public Guid Blueprint;
@@ -1924,6 +1940,7 @@ namespace Frosty.Core
 
             public BundleJson(BundleEntry bEntry)
             {
+                OriginalName = bEntry.Name;
                 SuperBundle = App.AssetManager.GetSuperBundle(bEntry.SuperBundleId).Name;
                 BundleType = bEntry.Type;
                 Blueprint = bEntry.Blueprint != null ? bEntry.Blueprint.Guid : Guid.Empty;
@@ -1940,6 +1957,7 @@ namespace Frosty.Core
 
         public class EbxJson
         {
+            public string OriginalName;
             public Guid FileGuid;
             public List<string> AddedBundles;
             //public Dictionary<string, string> LinkedAssets = new Dictionary<string, string>();
@@ -1954,6 +1972,7 @@ namespace Frosty.Core
             }
             public EbxJson(EbxAssetEntry refEntry)
             {
+                OriginalName = refEntry.Name;
                 FileGuid = refEntry.Guid;
                 LinkedEbx = refEntry.LinkedAssets.Where(o => o is EbxAssetEntry j).ToList().Select(o => ((EbxAssetEntry)o).Guid).ToList();
                 LinkedRes = refEntry.LinkedAssets.Where(o => o is ResAssetEntry j).ToList().Select(o => ((ResAssetEntry)o).ResRid).ToList();
@@ -1983,6 +2002,7 @@ namespace Frosty.Core
 
         public class ResJson
         {
+            public string OriginalName;
             public ulong ResRid;
             public uint ResType;
             public string ResMeta;
@@ -2000,6 +2020,7 @@ namespace Frosty.Core
             }
             public ResJson(ResAssetEntry resEntry)
             {
+                OriginalName = resEntry.Name;
                 ResRid = resEntry.ResRid;
                 ResType = resEntry.ResType;
                 if (resEntry.ResMeta != null)
