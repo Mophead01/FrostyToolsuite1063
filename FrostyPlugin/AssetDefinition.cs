@@ -5,6 +5,7 @@ using FrostySdk.Ebx;
 using FrostySdk.Interfaces;
 using FrostySdk.IO;
 using FrostySdk.Managers;
+using FrostySdk.Resources;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Media;
@@ -220,7 +221,7 @@ namespace Frosty.Core
         // imports the asset from a raw ebx bin
         private void ImportFromBin(EbxAssetEntry entry, string path, bool dataOnly = true)
         {
-            if (App.PluginManager.GetCustomHandler(entry.Type) != null)
+            if (App.PluginManager.GetCustomHandler(entry.Type) != null && (entry.ModifiedEntry.DataObject as ModifiedResource) != null)
             {
                 App.Logger.LogError("Cannot Import .bin into asset with handler");
                 return;
