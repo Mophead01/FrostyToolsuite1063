@@ -12,6 +12,7 @@ using Frosty.Core;
 using Frosty.Core.Controls;
 using FrostyCore;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FrostyEditor
 {
@@ -63,7 +64,7 @@ namespace FrostyEditor
 #if FROSTY_DEVELOPER
             Version += " (SWBF2 Script Extender - Developer Mode)";
 #else
-            Version += $" (SWBF2 Script Extender v1.0.0)";
+            Version += $" (SWBF2 Script Extender {FrostyEditor.Properties.Resources.BuildDate.Trim().Split(' ').ElementAtOrDefault(1)})";
 #endif
         }
 

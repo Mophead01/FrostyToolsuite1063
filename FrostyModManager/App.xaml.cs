@@ -10,6 +10,7 @@ using FrostySdk.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows;
@@ -66,7 +67,7 @@ namespace FrostyModManager
 #if FROSTY_DEVELOPER
             Version += " (SWBF2 Script Extender - Developer Mode)";
 #else
-            Version += $" (SWBF2 Script Extender v1.0.0)";
+            Version += $" (SWBF2 Script Extender {FrostyModManager.Properties.Resources.BuildDate.Trim().Split(' ').ElementAtOrDefault(1)})";
 #endif
         }
 
