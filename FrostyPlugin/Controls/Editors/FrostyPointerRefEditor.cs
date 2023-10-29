@@ -654,7 +654,7 @@ namespace Frosty.Core.Controls.Editors
             RefType = type;
             RefValue = value.__Id + " (" + path + ")";
             RefValueName = value.__Id;
-            RefValueOverride = App.PluginManager.GetPointerRefIdOverride(value, false);
+            RefValueOverride = App.PluginManager.GetPointerRefIdOverride(value, 100);
             RefValuePath = path;
         }
 

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConnectionPlugin", "ConnectionPlugin.csproj", "{A31D335E-688C-4761-9750-2B54581D898D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Developer - Debug|x64 = Developer - Debug|x64
+		Release - Alpha|x64 = Release - Alpha|x64
+		Release - Beta|x64 = Release - Beta|x64
+		Release - Final|x64 = Release - Final|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A31D335E-688C-4761-9750-2B54581D898D}.Developer - Debug|x64.ActiveCfg = Developer - Debug|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Developer - Debug|x64.Build.0 = Developer - Debug|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Alpha|x64.ActiveCfg = Release - Alpha|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Alpha|x64.Build.0 = Release - Alpha|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Beta|x64.ActiveCfg = Release - Beta|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Beta|x64.Build.0 = Release - Beta|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Final|x64.ActiveCfg = Release - Final|x64
+		{A31D335E-688C-4761-9750-2B54581D898D}.Release - Final|x64.Build.0 = Release - Final|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E0B98E8D-666F-4009-9070-EF9B1F761CE3}
+	EndGlobalSection
+EndGlobal
