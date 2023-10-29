@@ -221,13 +221,17 @@ namespace Frosty.Core
             return null;
         }
 
-        public string GetPointerRefIdOverride(dynamic objData, bool applySizeLimit)
+        public string GetPointerRefIdOverride(dynamic objData, int maxLength = -1)
         {
             string lookupName = objData.GetType().Name.ToLower();
             if (!m_pridOverrides.ContainsKey(lookupName))
                 return "";
-            return ((PrIdExtension)m_pridOverrides[lookupName]).GetOverrideString(objData);
-        }
+            string overrideString = (string)((PrIdExtension)m_pridOverrides[lookupName]).GetOverrideString(objData);
+            if (maxLength < 4 || overrideString.Length < maxLength)
+                return overrideString;
+            else
+                return overrideString.Substring(0, maxLength - 3) + "...";
+        }   
 
         /// <summary>
         /// Returns true if a plugin has registered the specified name as a third party DLL.

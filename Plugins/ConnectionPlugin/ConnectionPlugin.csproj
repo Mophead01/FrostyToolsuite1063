@@ -41,14 +41,46 @@
   </Target>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\FrostyControls\FrostyControls.csproj">
-      <Private>false</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\..\FrostyPlugin\FrostyCore.csproj">
-      <Private>false</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\..\FrostySdk\FrostySdk.csproj">
-      <Private>false</Private>
-    </ProjectReference>
+    <None Remove="Resources\Client.png" />
+    <None Remove="Resources\ClientAndServer.png" />
+    <None Remove="Resources\Comment.png" />
+    <None Remove="Resources\Invalid.png" />
+    <None Remove="Resources\NetworkedClient.png" />
+    <None Remove="Resources\NetworkedClientAndServer.png" />
+    <None Remove="Resources\NetworkedOnly.png" />
+    <None Remove="Resources\NoRealm.png" />
+    <None Remove="Resources\Server.png" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\FrostyControls\FrostyControls.csproj" />
+    <ProjectReference Include="..\..\FrostyPlugin\FrostyCore.csproj" />
+    <ProjectReference Include="..\..\FrostySdk\FrostySdk.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>D:\Modding\Frosty\FrostyToolsuite-1.0.71\FrostyEditor\bin\Developer\Debug\ThirdParty\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Resource Include="Resources\Client.png" />
+    <Resource Include="Resources\ClientAndServer.png" />
+    <Resource Include="Resources\Comment.png" />
+    <Resource Include="Resources\Invalid.png" />
+    <Resource Include="Resources\NetworkedClient.png" />
+    <Resource Include="Resources\NetworkedClientAndServer.png" />
+    <Resource Include="Resources\NetworkedOnly.png" />
+    <Resource Include="Resources\NoRealm.png" />
+    <Resource Include="Resources\Server.png" />
+  </ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="xcopy /Y &quot;$(TargetPath)&quot; &quot;E:\C#\Frosty\FrostyToolSuite\FrostyEditor\bin\Developer\Debug\Plugins&quot;" />
+	</Target>
 </Project>
