@@ -12,6 +12,7 @@ using Frosty.Core;
 using Frosty.Core.Controls;
 using FrostyCore;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FrostyEditor
 {
@@ -61,11 +62,9 @@ namespace FrostyEditor
             Exit += Application_Exit;
 
 #if FROSTY_DEVELOPER
-            Version += " (Developer)";
-#elif FROSTY_ALPHA
-            Version += $" (ALPHA {Frosty.Core.App.Version})";
-#elif FROSTY_BETA
-            Version += $" (BETA {Frosty.Core.App.Version})";
+            Version += " (SWBF2 Script Extender - Developer Mode)";
+#else
+            Version += $" (SWBF2 Script Extender {FrostyEditor.Properties.Resources.BuildDate.Trim().Split(' ').ElementAtOrDefault(1)})";
 #endif
         }
 
@@ -89,7 +88,6 @@ namespace FrostyEditor
                 writer.WriteLine($"{exp.Message}\r\n\r\n{exp.StackTrace}");
 
             FrostyExceptionBox.Show(exp, "Frosty Editor");
-            Environment.Exit(0);
         }
 
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)

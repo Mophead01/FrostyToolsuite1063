@@ -295,3 +295,5 @@ __pycache__/
 *.lib
 /FrostyEditor/MigrationBackup
 /Plugins/LevelEditorOldPlugin
+/FrostyEditor/BuildDate.txt
+/FrostyModManager/BuildDate.txt

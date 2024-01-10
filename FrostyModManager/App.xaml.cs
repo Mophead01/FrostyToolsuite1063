@@ -10,6 +10,7 @@ using FrostySdk.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows;
@@ -64,11 +65,9 @@ namespace FrostyModManager
             DispatcherUnhandledException += App_DispatcherUnhandledException;
 
 #if FROSTY_DEVELOPER
-            Version += " (Developer)";
-#elif FROSTY_ALPHA
-            Version += $" (ALPHA {Frosty.Core.App.Version})";
-#elif FROSTY_BETA
-            Version += $" (BETA {Frosty.Core.App.Version})";
+            Version += " (SWBF2 Script Extender - Developer Mode)";
+#else
+            Version += $" (SWBF2 Script Extender {FrostyModManager.Properties.Resources.BuildDate.Trim().Split(' ').ElementAtOrDefault(1)})";
 #endif
         }
 
@@ -80,7 +79,6 @@ namespace FrostyModManager
                 writer.WriteLine($"{exp.Message}\r\n\r\n{exp.StackTrace}");
 
             FrostyExceptionBox.Show(exp, "Frosty Mod Manager");
-            Environment.Exit(0);
         }
 
         private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)

@@ -59,5 +59,15 @@ namespace FrostyEditor.Properties {
                 resourceCulture = value;
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 3-04-0-0 
+        ///.
+        /// </summary>
+        internal static string BuildDate {
+            get {
+                return ResourceManager.GetString("BuildDate", resourceCulture);
+            }
+        }
     }
 }

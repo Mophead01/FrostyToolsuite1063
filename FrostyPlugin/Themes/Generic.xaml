@@ -836,6 +836,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
@@ -848,7 +849,12 @@
                             <Image x:Name="PART_TypeImage" Grid.Column="1" Width="12" Height="12" Margin="0,0,4,0" ToolTip="{Binding Path=RefType, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RefTypeToStringConverter}}" Source="{Binding Path=RefType, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource AssetEntryToBitmapSourceConverter}}"/>
 
                             <TextBlock x:Name="PART_RefName" Grid.Column="2" Text="{Binding Path=RefValueName, RelativeSource={RelativeSource TemplatedParent}}" ToolTip="{Binding Path=RefTooltip, RelativeSource={RelativeSource TemplatedParent}}" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Grid.Column="3" x:Name="refValuePath" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="4 0 0 0" Opacity="0.5">
+                            <TextBlock Grid.Column="3" x:Name="refValueOverride" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="4 0 0 0" Opacity="1.0"  Foreground="#58b6eb">
+                                <TextBlock.Text>
+                                    <Binding Path="RefValueOverride" RelativeSource="{RelativeSource TemplatedParent}" StringFormat="({0})"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <TextBlock Grid.Column="4" x:Name="refValuePath" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="4 0 0 0" Opacity="0.5">
                                 <TextBlock.Text>
                                     <Binding Path="RefValuePath" RelativeSource="{RelativeSource TemplatedParent}" StringFormat="({0})"/>
                                 </TextBlock.Text>
@@ -862,10 +868,13 @@
                         </Button>
 
                     </Grid>
-                    
+
                     <ControlTemplate.Triggers>
                         <Trigger Property="RefValuePath" Value="">
                             <Setter TargetName="refValuePath" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <Trigger Property="RefValueOverride" Value="">
+                            <Setter TargetName="refValueOverride" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="PART_TypeImage" Property="Opacity" Value="0.5"/>

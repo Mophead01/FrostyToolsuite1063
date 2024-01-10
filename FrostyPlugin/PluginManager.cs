@@ -60,6 +60,8 @@ namespace Frosty.Core
 
         private List<string> m_userShaders = new List<string>();
 
+        private Dictionary<string, PrIdExtension> m_pridOverrides = new Dictionary<string, PrIdExtension>();
+
         /// <summary>
         /// Retrieves a collection of data explorer context menu item extensions that have been loaded from plugins.
         /// </summary>
@@ -218,6 +220,18 @@ namespace Frosty.Core
             }
             return null;
         }
+
+        public string GetPointerRefIdOverride(dynamic objData, int maxLength = -1)
+        {
+            string lookupName = objData.GetType().Name.ToLower();
+            if (!m_pridOverrides.ContainsKey(lookupName))
+                return "";
+            string overrideString = (string)((PrIdExtension)m_pridOverrides[lookupName]).GetOverrideString(objData);
+            if (maxLength < 4 || overrideString.Length < maxLength)
+                return overrideString;
+            else
+                return overrideString.Substring(0, maxLength - 3) + "...";
+        }   
 
         /// <summary>
         /// Returns true if a plugin has registered the specified name as a third party DLL.
@@ -437,7 +451,7 @@ namespace Frosty.Core
 
             foreach (var tmpAttr in assembly.GetCustomAttributes())
             {
-                if (m_managerType == PluginManagerType.ModManager && !(tmpAttr is RegisterCustomHandlerAttribute) && !(tmpAttr is RegisterExecutionAction) && !(tmpAttr is RegisterOptionsExtensionAttribute) && !(tmpAttr is RegisterMenuExtensionAttribute))
+                if (m_managerType == PluginManagerType.ModManager && !(tmpAttr is RegisterCustomHandlerAttribute) && !(tmpAttr is RegisterExecutionAction) && !(tmpAttr is RegisterOptionsExtensionAttribute) && !(tmpAttr is RegisterMenuExtensionAttribute) && !(tmpAttr is RegisterStartupActionAttribute))
                     continue;
 
                 if (loadType == PluginLoadType.Startup)
@@ -463,6 +477,10 @@ namespace Frosty.Core
                     else if (tmpAttr is RegisterStartupActionAttribute attr2)
                     {
                         m_startupActions.Add((StartupAction)Activator.CreateInstance(attr2.StartupActionType));
+                    }
+                    else if (tmpAttr is RegisterPointerRefIdOverrideAttribute attr5)
+                    {
+                        m_pridOverrides.Add(attr5.LookupName.ToLower(), (PrIdExtension)Activator.CreateInstance(attr5.PrIdType));
                     }
                 }
                 else if (loadType == PluginLoadType.Initialize)

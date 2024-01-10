@@ -23,20 +23,29 @@
                               "/>
                         </Viewbox>
                         <StackPanel x:Name="PART_StackPanel" Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
-                            <Viewbox Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
+                            <TextBlock x:Name="PART_SourceExternalName" Opacity="0.80" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_SourceInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_SourceFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_SourceField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceInterfaceValue" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <Viewbox x:Name="PART_ConnectionImage" Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
                                 <Path Width="30" Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Stretch="None" Fill="#FF57D953" Opacity="1" Data="
                                       M20 6.9277344C19.871 6.9277344 19.741187 6.9519063 19.617188 7.0039062C19.243188 7.1579062 19 7.5237344 19 7.9277344L19 11.998047L4 11.998047C2.895 11.998047 2 12.893047 2 13.998047L2 15.998047C2 17.103047 2.895 17.998047 4 17.998047L19 17.998047L19 22.070312C19 22.474312 19.243187 22.840141 19.617188 22.994141C19.991187 23.150141 20.420031 23.063344 20.707031 22.777344L27.777344 15.705078C28.168344 15.314078 28.168344 14.683969 27.777344 14.292969L20.707031 7.2207031C20.516031 7.0297031 20.26 6.9277344 20 6.9277344 z
                                       "/>
                             </Viewbox>
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Margin="6, 0, 0, 0"
-                                       Text=""
-                                       FontWeight="Bold"/>
+                            <TextBlock x:Name="PART_TargetExternalName" Opacity="0.80" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_TargetInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_TargetFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_TargetField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetInterfaceValue" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <Image x:Name="PART_ConnectionTargetRealm" Width="32" Source=""/>
+                            <TextBlock x:Name="PART_ConnectionTargetType" Opacity="0.3" Text="" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
 
                     </Grid>
@@ -67,20 +76,26 @@
                               "/>
                         </Viewbox>
                         <StackPanel x:Name="PART_StackPanel" Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
-                            <Viewbox Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
-                                <Path Width="30" Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Stretch="None" Fill="{StaticResource FontColor}" Opacity="1" Data="
+                            <TextBlock x:Name="PART_SourceExternalName" Opacity="0.80" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_SourceInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_SourceFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_SourceField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
+                            <Viewbox x:Name="PART_ConnectionImage" Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
+                                <Path Width="30" Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Stretch="None" Fill="White" Opacity="1" Data="
                                       M20 6.9277344C19.871 6.9277344 19.741187 6.9519063 19.617188 7.0039062C19.243188 7.1579062 19 7.5237344 19 7.9277344L19 11.998047L4 11.998047C2.895 11.998047 2 12.893047 2 13.998047L2 15.998047C2 17.103047 2.895 17.998047 4 17.998047L19 17.998047L19 22.070312C19 22.474312 19.243187 22.840141 19.617188 22.994141C19.991187 23.150141 20.420031 23.063344 20.707031 22.777344L27.777344 15.705078C28.168344 15.314078 28.168344 14.683969 27.777344 14.292969L20.707031 7.2207031C20.516031 7.0297031 20.26 6.9277344 20 6.9277344 z
                                       "/>
                             </Viewbox>
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Margin="6, 0, 0, 0"
-                                       Text=""
-                                       FontWeight="Bold"/>
+                            <TextBlock x:Name="PART_TargetExternalName" Opacity="0.80" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_TargetInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_TargetFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_TargetField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
+                            <Image x:Name="PART_ConnectionTargetRealm" Width="32" Source=""/>
                         </StackPanel>
 
                     </Grid>
@@ -111,22 +126,25 @@
                               "/>
                         </Viewbox>
                         <StackPanel x:Name="PART_StackPanel" Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
-                            <Viewbox Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
+                            <TextBlock x:Name="PART_SourceExternalName" Opacity="0.80" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_SourceOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_SourceInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_SourceFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_SourceField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
+                            <Viewbox x:Name="PART_ConnectionImage" Width="16" Height="14" Margin="4 0" VerticalAlignment="Center">
                                 <Path Width="30" Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Stretch="None" Fill="#FF58B6EB" Opacity="1" Data="
                                       M20 6.9277344C19.871 6.9277344 19.741187 6.9519063 19.617188 7.0039062C19.243188 7.1579062 19 7.5237344 19 7.9277344L19 11.998047L4 11.998047C2.895 11.998047 2 12.893047 2 13.998047L2 15.998047C2 17.103047 2.895 17.998047 4 17.998047L19 17.998047L19 22.070312C19 22.474312 19.243187 22.840141 19.617188 22.994141C19.991187 23.150141 20.420031 23.063344 20.707031 22.777344L27.777344 15.705078C28.168344 15.314078 28.168344 14.683969 27.777344 14.292969L20.707031 7.2207031C20.516031 7.0297031 20.26 6.9277344 20 6.9277344 z
-                                      "
-                                      RenderTransformOrigin="0.5,0.5">
-                                    <Path.RenderTransform>
-                                        <ScaleTransform ScaleX="-1.0"/>
-                                    </Path.RenderTransform>
-                                </Path>
+                                      "/>
                             </Viewbox>
-                            <TextBlock Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Opacity="0.5" Text="."/>
-                            <TextBlock Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetExternalName" Opacity="0.80" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetIdx" Opacity="0.75" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetName" Opacity="0.5" Text="" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PART_TargetOverride" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#58b6eb"/>
+                            <TextBlock x:Name="PART_TargetInterfaceIdx" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis" Foreground="#eb0000"/>
+                            <TextBlock x:Name="PART_TargetFullstop" Opacity="0.5" Text="."/>
+                            <TextBlock x:Name="PART_TargetField" Opacity="1.0" Text="" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
 
                     </Grid>

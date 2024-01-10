@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using ConnectionPlugin.Editors;
 using FrostySdk;
+using ConnectionPlugin.TypeOverrides;
+using PropertyConnectionTypeOverride = ConnectionPlugin.Editors.PropertyConnectionTypeOverride;
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
@@ -39,3 +41,5 @@ using FrostySdk;
 [assembly: RegisterGlobalTypeEditor("LinkConnection", typeof(LinkConnectionEditor))]
 
 [assembly: PluginNotValidForProfile((int)ProfileVersion.PlantsVsZombiesGardenWarfare)]
+
+[assembly: RegisterTypeOverride("PropertyConnection", typeof(PropertyConnectionTypeOverride), false, 0)]

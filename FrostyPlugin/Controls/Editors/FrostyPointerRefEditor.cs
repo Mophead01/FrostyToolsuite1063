@@ -110,6 +110,11 @@ namespace Frosty.Core.Controls.Editors
             get => (string)GetValue(RefValueNameProperty);
             set => SetValue(RefValueNameProperty, value);
         }
+        public static readonly DependencyProperty RefValueOverrideProperty = DependencyProperty.Register("RefValueOverride", typeof(string), typeof(FrostyPointerRefControl), new FrameworkPropertyMetadata(""));
+        public string RefValueOverride {
+            get => (string)GetValue(RefValueOverrideProperty);
+            set => SetValue(RefValueOverrideProperty, value);
+        }
         public static readonly DependencyProperty RefValuePathProperty = DependencyProperty.Register("RefValuePath", typeof(string), typeof(FrostyPointerRefControl), new FrameworkPropertyMetadata(""));
         public string RefValuePath
         {
@@ -586,6 +591,7 @@ namespace Frosty.Core.Controls.Editors
                         // fallback or external root asset
                         RefValue = entry.Filename + ((entry.Path != "") ? " (" + entry.Name + ")" : "");
                         RefValueName = entry.Filename;
+                        RefValueOverride = "";
                         RefValuePath = entry.Name;
                         RefType = entry;
                         return;
@@ -610,6 +616,7 @@ namespace Frosty.Core.Controls.Editors
                         {
                             RefValue = "(invalid)";
                             RefValueName = RefValue;
+                            RefValueOverride = "";
                             RefValuePath = "";
                             RefType = (baseType != null) ? baseType.Name : "";
                             return;
@@ -620,6 +627,7 @@ namespace Frosty.Core.Controls.Editors
                 {
                     RefValue = "(invalid)";
                     RefValueName = RefValue;
+                    RefValueOverride = "";
                     RefValuePath = "";
                     RefType = (baseType != null) ? baseType.Name : "";
                     return;
@@ -637,6 +645,7 @@ namespace Frosty.Core.Controls.Editors
             {
                 RefValue = "(null)";
                 RefValueName = RefValue;
+                RefValueOverride = "";
                 RefValuePath = "";
                 RefType = (baseType != null) ? baseType.Name : "";
                 return;
@@ -645,6 +654,7 @@ namespace Frosty.Core.Controls.Editors
             RefType = type;
             RefValue = value.__Id + " (" + path + ")";
             RefValueName = value.__Id;
+            RefValueOverride = App.PluginManager.GetPointerRefIdOverride(value, 100);
             RefValuePath = path;
         }
 
