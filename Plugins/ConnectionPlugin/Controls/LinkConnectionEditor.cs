@@ -44,10 +44,17 @@ namespace ConnectionPlugin.Editors
                 (string, string, string) sanitizedTexts = Sanitize(pr, field, type == "Source");
                 void SetOrRemove(string name, bool dontRemove, string newValue)
                 {
+                    //if (dontRemove)
+                    //    (panels["PART_" + type + name] as TextBlock).Text = newValue;
+                    //else
+                    //    sp.Children.Remove(panels["PART_" + type + name]);
                     if (dontRemove)
+                    {
                         (panels["PART_" + type + name] as TextBlock).Text = newValue;
+                        panels["PART_" + type + name].Visibility = Visibility.Visible;
+                    }
                     else
-                        sp.Children.Remove(panels["PART_" + type + name]);
+                        panels["PART_" + type + name].Visibility = Visibility.Hidden;
                 }
                 SetOrRemove("ExternalName", entityTexts.Item1 != "", entityTexts.Item1 + "/");
                 SetOrRemove("Idx", entityTexts.Item4 != "", entityTexts.Item4);

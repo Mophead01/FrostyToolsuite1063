@@ -107,6 +107,11 @@ namespace FsLocalizationPlugin
                 byte[] buf = NativeReader.ReadInStream(am.GetChunk(chunkEntry));
                 buf = ModifyChunk(buf, modFs, values);
 
+                using (NativeWriter writer = new NativeWriter(new FileStream(Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads" + @"\FrostyChunk.chunk", FileMode.Create), false, true))
+                {
+                    writer.Write(buf);
+                }
+
                 localizedText.BinaryChunkSize = (uint)buf.Length;
                 newChunkEntry.LogicalSize = (uint)buf.Length;
                 buf = Utils.CompressFile(buf);
@@ -119,6 +124,7 @@ namespace FsLocalizationPlugin
                 newChunkEntry.IsTocChunk = true;
 
                 runtimeResources.AddResource(new RuntimeChunkResource(newChunkEntry), buf);
+
             }
             
             using (EbxBaseWriter writer = EbxBaseWriter.CreateWriter(new MemoryStream()))
