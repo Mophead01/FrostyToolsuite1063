@@ -20,6 +20,7 @@ using FrostySdk.Ebx;
 using Frosty.Core.Controls.Editors;
 using Frosty.Core.Converters;
 using FrostySdk;
+using FrostySdk.Managers;
 
 namespace Frosty.Core.Controls
 {
@@ -738,6 +739,88 @@ namespace Frosty.Core.Controls
                     }
 
                     if (!item.FilterGuid(guid, refObjects, !item.IsHidden) || !item.IsHidden)
+                        retVal = false;
+                }
+            }
+            if (!retVal)
+            {
+                IsHidden = false;
+            }
+            return retVal;
+        }
+
+        public bool FilterType(string typeName, List<object> refObjects, bool doNotHideSubObjects = false)
+        {
+            if (_value is PointerRef pRef)
+            {
+                if (pRef.Type == PointerRefType.Internal)
+                {
+                    if (GetCustomAttribute<IsReferenceAttribute>() == null)
+                    {
+                        if (refObjects.Contains(pRef.Internal))
+                            return true;
+                        refObjects.Add(pRef.Internal);
+                    }
+                }
+            }
+
+            bool retVal = true;
+
+            foreach (var item in Children)
+            {
+                if (connections.Contains(item.Value.GetType().Name))
+                {
+                    item.IsHidden = true;
+                    foreach (PointerRef pr in new List<dynamic> { (PointerRef)((dynamic)item.Value).Source, (PointerRef)((dynamic)item.Value).Target })
+                    {
+                        if (pr.Type == PointerRefType.Internal)
+                        {
+                            if (((dynamic)pr.Internal).GetType().Name == typeName)
+                                item.IsHidden = false;
+                        }
+                        else if (pr.Type == PointerRefType.External)
+                        {
+                            EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(pr.External.FileGuid);
+                            if (refEntry == null)
+                                continue;
+                            EbxAsset refAsset = App.AssetManager.GetEbx(refEntry);
+                            dynamic obj = refAsset.GetObject(pr.External.ClassGuid);
+                            if (obj == null)
+                                continue;
+
+                            if (obj.GetType().Name == typeName)
+                                item.IsHidden = false;
+                        }
+                    }
+                    if (retVal && !item.IsHidden)
+                        retVal = false;
+                }
+                else
+                {
+                    item.IsHidden = !doNotHideSubObjects;
+                    if (item.Value is PointerRef pr)
+                    {
+                        if (pr.Type == PointerRefType.Internal)
+                        {
+                            if (((dynamic)pr.Internal).GetType().Name == typeName)
+                                item.IsHidden = false;
+                        }
+                        else if (pr.Type == PointerRefType.External)
+                        {
+                            EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(pr.External.FileGuid);
+                            if (refEntry == null)
+                                continue;
+                            EbxAsset refAsset = App.AssetManager.GetEbx(refEntry);
+                            dynamic obj = refAsset.GetObject(pr.External.ClassGuid);
+                            if (obj == null)
+                                continue;
+
+                            if (obj.GetType().Name == typeName)
+                                item.IsHidden = false;
+                        }
+                    }
+
+                    if (!item.FilterType(typeName, refObjects, !item.IsHidden) || !item.IsHidden)
                         retVal = false;
                 }
             }
@@ -1862,6 +1945,17 @@ namespace Frosty.Core.Controls
                     foreach (var item in items)
                     {
                         if (item.FilterGuid(guidValue.ToLower(), refObjects))
+                            item.IsHidden = true;
+                    }
+                }
+                else if (filterText.StartsWith("type:"))
+                {
+                    string[] arr = filterText.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                    string typeName = (arr.Length > 1) ? arr[1] : "0";
+
+                    foreach (var item in items)
+                    {
+                        if (item.FilterType(typeName, refObjects))
                             item.IsHidden = true;
                     }
                 }
