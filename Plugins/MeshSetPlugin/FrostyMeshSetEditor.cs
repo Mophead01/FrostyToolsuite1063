@@ -155,10 +155,23 @@ namespace MeshSetPlugin
         public List<PreviewMeshSectionData> Sections { get; set; } = new List<PreviewMeshSectionData>();
     }
 
+    [DisplayName("BoundingBox")]
+    [EbxClassMeta(EbxFieldType.Struct)]
+    public class MeshAssetBoundingBox
+    {
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public Vec3 Minimum { get; set; }
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public Vec3 Maximum { get; set; }
+    }
+
     [DisplayName("Mesh Settings")]
     [EbxClassMeta(EbxFieldType.Struct)]
     public class MeshSetMeshSettings
     {
+        [Category("Mesh")]
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public MeshAssetBoundingBox BoundingBox { get; set; } = new MeshAssetBoundingBox();
         [Category("Mesh")]
         [EbxFieldMeta(EbxFieldType.Struct)]
         public List<PreviewMeshLodData> Lods { get; set; } = new List<PreviewMeshLodData>();
@@ -1906,6 +1919,33 @@ namespace MeshSetPlugin
                 CalculateCompositePartDataForLod(sectionNodeMapping, meshLod, ref partBbox, ref transforms);
             }
 
+            if (lodIndex == 0)
+            {
+                List<Vector3> points = new List<Vector3>();
+
+                foreach (FbxNode node in nodes)
+                {
+                    FbxNodeAttribute attr = node.GetNodeAttribute(FbxNodeAttribute.EType.eMesh);
+                    FbxMesh fmesh = new FbxMesh(attr);
+                    FbxSkin fskin = (fmesh.GetDeformerCount(FbxDeformer.EDeformerType.eSkin) != 0)
+                        ? new FbxSkin(fmesh.GetDeformer(0, FbxDeformer.EDeformerType.eSkin))
+                        : null;
+
+                    if (fskin == null)
+                        return;
+
+                    foreach (FbxCluster cluster in fskin.Clusters)
+                    {
+                        if (cluster.ControlPointIndicesCount == 0)
+                            continue;
+
+                        Matrix sectionMatrix = new FbxMatrix(node.EvaluateGlobalTransform()).ToSharpDX();
+                        points.AddRange(GetVerticesFromCluster(fmesh, cluster, sectionMatrix));
+                    }
+                }
+                meshSet.BoundingBox = AABBFromPoints(points).Item1;
+            }
+
             if (ProfilesLibrary.DataVersion == (int)ProfileVersion.StarWarsBattlefrontII)
             {
                 // update shader block depot mesh parameters
@@ -3360,6 +3400,8 @@ namespace MeshSetPlugin
 
         private void PgMeshSettings_OnModified(object sender, ItemModifiedEventArgs e)
         {
+            meshSet.BoundingBox = new AxisAlignedBox() { min = meshSettings.BoundingBox.Minimum , max = meshSettings.BoundingBox.Maximum};
+            App.AssetManager.ModifyRes(meshSet.ResourceId, meshSet);
             if (e.Item.Path.Contains("Sections"))
             {
                 int lodIdx = getArrayIndexFromPath("Lods", e.Item.Path);
@@ -3842,6 +3884,8 @@ namespace MeshSetPlugin
         {
             meshSettings = new MeshSetMeshSettings();
             dynamic materials = ((dynamic)RootObject).Materials;
+            meshSettings.BoundingBox.Minimum = meshSet.BoundingBox.min;
+            meshSettings.BoundingBox.Maximum = meshSet.BoundingBox.max;
 
             foreach (MeshSetLod lod in meshSet.Lods)
             {
