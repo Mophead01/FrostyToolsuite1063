@@ -1272,7 +1272,10 @@ namespace FrostySdk.Managers
             EbxAssetEntry entry = ebxList[name];
 
             if (entry.ModifiedEntry == null)
+            {
+                GetLoadedEbx(entry, true);
                 entry.ModifiedEntry = new ModifiedAssetEntry();
+            }
 
             object modifiedResource = asset.SaveModifiedResource();
             entry.ModifiedEntry.DataObject = modifiedResource ?? asset;
@@ -1544,11 +1547,41 @@ namespace FrostySdk.Managers
             }
         }
 
+        private List<(EbxAssetEntry, EbxAsset)> LoadedAssets = new List<(EbxAssetEntry, EbxAsset)>();
+
+        public EbxAsset GetLoadedEbx(EbxAssetEntry entry, bool deleteFromMemory = false)
+        {
+            for(int i = 0; i < LoadedAssets.Count; i++)
+            {
+                if (LoadedAssets[i].Item1 == entry)
+                {
+                    EbxAsset loadedAsset = LoadedAssets[i].Item2;
+                    LoadedAssets.RemoveAt(i);
+                    if (!deleteFromMemory)
+                        LoadedAssets.Insert(0, (entry, loadedAsset));
+                    return loadedAsset;
+                }
+            }
+            return null;
+        }
+        public void AddLoadedEbx(EbxAssetEntry entry, EbxAsset asset)
+        {
+            LoadedAssets.Insert(0, (entry, asset));
+            if (LoadedAssets.Count > 100)
+                LoadedAssets.RemoveAt(LoadedAssets.Count - 1);
+        }
+
         public EbxAsset GetEbx(EbxAssetEntry entry, bool getUnmodifiedData = false)
         {
             // return modified data as a data object
             if ((entry.ModifiedEntry?.DataObject as EbxAsset) != null && !getUnmodifiedData)
                 return entry.ModifiedEntry.DataObject as EbxAsset;
+
+            // Check if a version of the unmodified asset is already in memory
+            EbxAsset readAsset = GetLoadedEbx(entry);
+            if (readAsset != null)
+                return readAsset;
+
 
             Stream ebxStream = GetAsset(entry);
             if (ebxStream == null)
@@ -1560,9 +1593,10 @@ namespace FrostySdk.Managers
                 if (entry.ExtraData.CasPath.StartsWith("native_patch"))
                     patched = true;
             }
-
             using (EbxReader reader = EbxReader.CreateReader(GetAsset(entry), fs, patched))
-                return reader.ReadAsset<EbxAsset>();
+                 readAsset = reader.ReadAsset<EbxAsset>();
+            AddLoadedEbx(entry, readAsset);
+            return readAsset;
         }
 
         /// <summary>
