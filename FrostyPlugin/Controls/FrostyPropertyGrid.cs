@@ -681,7 +681,7 @@ namespace Frosty.Core.Controls
 
             bool retVal = true;
 
-            foreach (var item in Children)
+            foreach (var item in Children.ToList())
             {
                 if (connections.Contains(item.Value.GetType().Name))
                 {

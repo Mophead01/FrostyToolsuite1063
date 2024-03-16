@@ -289,7 +289,7 @@ namespace ConnectionPlugin.Editors
                     int idx = 0;
                     foreach (dynamic reference in blueprint.Objects)
                     {
-                        if (reference.Internal.__InstanceGuid == classGuid || (internalObj != null && reference.Internal.__InstanceGuid == internalObj))
+                        if (reference.Internal != null && (reference.Internal.__InstanceGuid == classGuid || (internalObj != null && reference.Internal.__InstanceGuid == internalObj)))
                             return "[" + idx + "]";
                         idx++;
                     }

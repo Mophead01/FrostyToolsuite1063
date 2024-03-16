@@ -19,6 +19,11 @@ namespace MeshSetPlugin.Render
                 MeshRenderLod renderLod = new MeshRenderLod(state, lod, materials, skeleton);
                 lods.Add(renderLod);
             }
+            UpdateBounds(meshSet);
+        }
+
+        public void UpdateBounds(MeshSet meshSet)
+        {
 
             Bounds = new BoundingBox(
                 new Vector3(meshSet.BoundingBox.min.x, meshSet.BoundingBox.min.y, meshSet.BoundingBox.min.z),

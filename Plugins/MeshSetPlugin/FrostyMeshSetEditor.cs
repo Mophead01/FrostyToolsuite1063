@@ -1919,33 +1919,6 @@ namespace MeshSetPlugin
                 CalculateCompositePartDataForLod(sectionNodeMapping, meshLod, ref partBbox, ref transforms);
             }
 
-            if (lodIndex == 0)
-            {
-                List<Vector3> points = new List<Vector3>();
-
-                foreach (FbxNode node in nodes)
-                {
-                    FbxNodeAttribute attr = node.GetNodeAttribute(FbxNodeAttribute.EType.eMesh);
-                    FbxMesh fmesh = new FbxMesh(attr);
-                    FbxSkin fskin = (fmesh.GetDeformerCount(FbxDeformer.EDeformerType.eSkin) != 0)
-                        ? new FbxSkin(fmesh.GetDeformer(0, FbxDeformer.EDeformerType.eSkin))
-                        : null;
-
-                    if (fskin == null)
-                        return;
-
-                    foreach (FbxCluster cluster in fskin.Clusters)
-                    {
-                        if (cluster.ControlPointIndicesCount == 0)
-                            continue;
-
-                        Matrix sectionMatrix = new FbxMatrix(node.EvaluateGlobalTransform()).ToSharpDX();
-                        points.AddRange(GetVerticesFromCluster(fmesh, cluster, sectionMatrix));
-                    }
-                }
-                meshSet.BoundingBox = AABBFromPoints(points).Item1;
-            }
-
             if (ProfilesLibrary.DataVersion == (int)ProfileVersion.StarWarsBattlefrontII)
             {
                 // update shader block depot mesh parameters
@@ -3175,6 +3148,17 @@ namespace MeshSetPlugin
                     numIndices++;
                 }
 
+                //generate AABB for vertices
+                List<Vector3> vertexPositions = new List<Vector3>();
+                foreach (DbObject vertex in vertices)
+                {
+                    Vector4 tmp = vertex.GetValue<Vector4>("Pos");
+                    Vector4 position = Vector3.Transform(new Vector3(tmp.X, tmp.Y, tmp.Z), sectionMatrix);
+                    vertexPositions.Add(new Vector3(position.X, position.Y, position.Z));
+
+                }
+                meshSet.BoundingBox = AABBFromPoints(vertexPositions).Item1;
+
                 // generate part bounding box
                 /*if(meshSet.Type == MeshType.MeshType_Composite)
                 {
@@ -3401,7 +3385,8 @@ namespace MeshSetPlugin
         private void PgMeshSettings_OnModified(object sender, ItemModifiedEventArgs e)
         {
             meshSet.BoundingBox = new AxisAlignedBox() { min = meshSettings.BoundingBox.Minimum , max = meshSettings.BoundingBox.Maximum};
-            App.AssetManager.ModifyRes(meshSet.ResourceId, meshSet);
+            if (App.AssetManager.GetResEntry(meshSet.ResourceId).IsModified)
+                App.AssetManager.ModifyRes(meshSet.ResourceId, meshSet);
             if (e.Item.Path.Contains("Sections"))
             {
                 int lodIdx = getArrayIndexFromPath("Lods", e.Item.Path);

@@ -411,10 +411,10 @@ namespace FrostySdk.Managers
 
         public override bool AddToBundle(int bid)
         {
-            if(Bundles.Count == 0 && !IsAdded)
-            {
-                return false;
-            }
+            //if(Bundles.Count == 0 && !IsAdded)
+            //{
+            //    return false;
+            //}
             return base.AddToBundle(bid);
         }
     }
@@ -1548,27 +1548,34 @@ namespace FrostySdk.Managers
         }
 
         private List<(EbxAssetEntry, EbxAsset)> LoadedAssets = new List<(EbxAssetEntry, EbxAsset)>();
+        object forLock = new object();
 
         public EbxAsset GetLoadedEbx(EbxAssetEntry entry, bool deleteFromMemory = false)
         {
-            for(int i = 0; i < LoadedAssets.Count; i++)
+            lock(forLock)
             {
-                if (LoadedAssets[i].Item1 == entry)
+                for (int i = 0; i < LoadedAssets.Count; i++)
                 {
-                    EbxAsset loadedAsset = LoadedAssets[i].Item2;
-                    LoadedAssets.RemoveAt(i);
-                    if (!deleteFromMemory)
-                        LoadedAssets.Insert(0, (entry, loadedAsset));
-                    return loadedAsset;
+                    if (LoadedAssets[i].Item1 == entry)
+                    {
+                        EbxAsset loadedAsset = LoadedAssets[i].Item2;
+                        LoadedAssets.RemoveAt(i);
+                        if (!deleteFromMemory)
+                            LoadedAssets.Insert(0, (entry, loadedAsset));
+                        return loadedAsset;
+                    }
                 }
             }
             return null;
         }
         public void AddLoadedEbx(EbxAssetEntry entry, EbxAsset asset)
         {
-            LoadedAssets.Insert(0, (entry, asset));
-            if (LoadedAssets.Count > 100)
-                LoadedAssets.RemoveAt(LoadedAssets.Count - 1);
+            lock (forLock)
+            {
+                LoadedAssets.Insert(0, (entry, asset));
+                if (LoadedAssets.Count > 100)
+                    LoadedAssets.RemoveAt(100);
+            }
         }
 
         public EbxAsset GetEbx(EbxAssetEntry entry, bool getUnmodifiedData = false)
