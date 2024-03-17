@@ -53,6 +53,8 @@
     <ProjectReference Include="..\..\FrostySdk\FrostySdk.csproj">
       <Private>false</Private>
     </ProjectReference>
+    <ProjectReference Include="..\MeshSetPlugin\MeshSetPlugin.csproj" />
+    <ProjectReference Include="..\RootInstanceEntriesPlugin\RootInstanceEntriesPlugin.csproj" />
   </ItemGroup>
   
   <ItemGroup>

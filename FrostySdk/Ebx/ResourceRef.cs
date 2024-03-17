@@ -3,7 +3,7 @@
     public struct ResourceRef
     {
         public static ResourceRef Zero = new ResourceRef(0);
-        private readonly ulong resourceId;
+        public ulong resourceId;
 
         public ResourceRef(ulong value)
         {

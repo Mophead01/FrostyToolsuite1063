@@ -19,6 +19,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
@@ -407,105 +409,83 @@ namespace EbxToXmlPlugin
                     string outDir = sfd.FileName;
                     FrostyTaskWindow.Show("Exporting Hash List", "", (task) =>
                     {
-                        uint totalCount = App.AssetManager.GetEbxCount();
-                        uint idx = 0;
-
-                        foreach (EbxAssetEntry entry in App.AssetManager.EnumerateEbx())
+                        int totalCount = App.AssetManager.EnumerateEbx().ToList().Count;
+                        int idx = 0;
+                        object forLock = new object();
+                        Parallel.ForEach(App.AssetManager.EnumerateEbx(), entry =>
                         {
-                            //if (entry.Name == "UI/Frontend/Screens/Play/InstantAction/InstantActionSettingsScreen")
-                            //{
-                            task.Update(entry.Name, (idx++ / (double)totalCount) * 100.0d);
-
                             EbxAsset refAsset = App.AssetManager.GetEbx(entry);
                             dynamic refRoot = refAsset.RootObject;
+                            lock (forLock)
+                            {
+                                task.Update(entry.Name, (idx++ / (double)totalCount) * 100.0d);
+                                foreach (dynamic obj in refAsset.Objects)
+                                {
+                                    if (HasProperty(obj, "PropertyConnections"))
+                                    {
+                                        foreach (dynamic PorpertyConnection in obj.PropertyConnections)
+                                        {
+                                            foreach (CString Field in new List<dynamic> { PorpertyConnection.SourceField, PorpertyConnection.TargetField })
+                                            {
+                                                if (!Hashes.ContainsKey(Field))
+                                                {
+                                                    Hashes.Add(Field, 1);
+                                                }
+                                                else
+                                                {
+                                                    Hashes[Field]++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (HasProperty(obj, "LinkConnections"))
+                                    {
+                                        foreach (dynamic LinkConnection in obj.LinkConnections)
+                                        {
+                                            foreach (CString Field in new List<dynamic> { LinkConnection.SourceField, LinkConnection.TargetField })
+                                            {
+                                                if (!Hashes.ContainsKey(Field))
+                                                {
+                                                    Hashes.Add(Field, 1);
+                                                }
+                                                else
+                                                {
+                                                    Hashes[Field]++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (HasProperty(obj, "EventConnections"))
+                                    {
+                                        foreach (dynamic EventConnection in obj.EventConnections)
+                                        {
+                                            foreach (CString Field in new List<dynamic> { EventConnection.SourceEvent.Name, EventConnection.TargetEvent.Name })
+                                            {
+                                                if (!Hashes.ContainsKey(Field))
+                                                {
+                                                    Hashes.Add(Field, 1);
+                                                }
+                                                else
+                                                {
+                                                    Hashes[Field]++;
+                                                }
+                                            }
+                                        }
+                                    }
 
-                            foreach (dynamic obj in refAsset.Objects)
-                            {
-                                if (HasProperty(obj, "PropertyConnections"))
-                                {
-                                    foreach (dynamic PorpertyConnection in obj.PropertyConnections)
-                                    {
-                                        foreach (CString Field in new List<dynamic> { PorpertyConnection.SourceField, PorpertyConnection.TargetField })
-                                        {
-                                            if (!Hashes.ContainsKey(Field))
-                                            {
-                                                Hashes.Add(Field, 1);
-                                            }
-                                            else
-                                            {
-                                                Hashes[Field]++;
-                                            }
-                                        }
-                                    }
                                 }
-                                if (HasProperty(obj, "LinkConnections"))
-                                {
-                                    foreach (dynamic LinkConnection in obj.LinkConnections)
-                                    {
-                                        foreach (CString Field in new List<dynamic> { LinkConnection.SourceField, LinkConnection.TargetField })
-                                        {
-                                            if (!Hashes.ContainsKey(Field))
-                                            {
-                                                Hashes.Add(Field, 1);
-                                            }
-                                            else
-                                            {
-                                                Hashes[Field]++;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (HasProperty(obj, "EventConnections"))
-                                {
-                                    foreach (dynamic EventConnection in obj.EventConnections)
-                                    {
-                                        foreach (CString Field in new List<dynamic> { EventConnection.SourceEvent.Name, EventConnection.TargetEvent.Name })
-                                        {
-                                            if (!Hashes.ContainsKey(Field))
-                                            {
-                                                Hashes.Add(Field, 1);
-                                            }
-                                            else
-                                            {
-                                                Hashes[Field]++;
-                                            }
-                                        }
-                                    }
-                                }
+                            }
+                        });
 
-                            }
-                            //foreach (CString key in Hashes.Keys)
-                            //{
-                            //    App.Logger.Log("Key: " + key + " " + Hashes[key].ToString());
-                            //}
-                            //}
-                        }
-                        List<string> UnknownHashes = new List<string>();
-                        List<string> KnownHashes = new List<string>();
-                        foreach (CString key in Hashes.Keys)
-                        {
-                            if (key.ToString().Length == 10 & key.ToString().StartsWith("0x"))
-                            {
-                                UnknownHashes.Add(key + "," + Hashes[key].ToString());
-                            }
-                            else
-                            {
-                                KnownHashes.Add(key + "," + Hashes[key].ToString());
-                            }
-                        }
-                        UnknownHashes.Sort();
-                        KnownHashes.Sort();
+                        Hashes = Hashes.OrderByDescending(pair => pair.Value).ToDictionary(pair => pair.Key, pair => pair.Value);
                         using (NativeWriter writer = new NativeWriter(new FileStream(outDir, FileMode.Create), false, true))
                         {
-                            writer.WriteLine("Unknown Strings:");
-                            foreach (string str in UnknownHashes)
+                            writer.WriteLine("Hash, Solved Name, Connection count");
+                            foreach(KeyValuePair<CString, int> pair in Hashes)
                             {
-                                writer.WriteLine(str);
-                            }
-                            writer.WriteLine("\nKnown Strings:");
-                            foreach (string str in KnownHashes)
-                            {
-                                writer.WriteLine(str);
+                                uint hash = (uint)Utils.HashString(pair.Key);
+                                bool isKnown = !pair.Key.ToString().StartsWith("0x");
+                                writer.WriteLine($"{(!isKnown ? pair.Key.ToString() : "0x" + hash.ToString("X").ToLower())}, {(!isKnown ? "Unknown" : pair.Key.ToString())}, {pair.Value}");
                             }
                         }
                     });
@@ -514,7 +494,6 @@ namespace EbxToXmlPlugin
                 }
             });
         }
-
         public class InputsOutputsMenuExtension : MenuExtension
         {
             internal static ImageSource imageSource = pluginimageSource;

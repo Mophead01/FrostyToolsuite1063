@@ -1209,9 +1209,11 @@ namespace FrostySdk
                     string currentString = reader.ReadLine();
                     int hash = Fnv1.HashString(currentString);
                     if (!strings.ContainsKey(hash))
-                    {
                         strings.Add(hash, currentString);
-                    }
+
+                    hash = Fnv1.HashString(currentString.ToLower());
+                    if (!strings.ContainsKey(hash))
+                        strings.Add(hash, currentString);
 
                     logger?.Log("progress:" + (double)reader.Position / (double)reader.Length * 100.0);
                 }

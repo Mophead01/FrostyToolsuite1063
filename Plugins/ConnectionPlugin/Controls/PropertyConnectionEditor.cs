@@ -156,10 +156,17 @@ namespace ConnectionPlugin.Editors
                 (string, string, string) sanitizedTexts = Sanitize(pr, field);
                 void SetOrRemove(string name, bool dontRemove, string newValue)
                 {
+                    //if (dontRemove)
+                    //    (panels["PART_" + type + name] as TextBlock).Text = newValue;
+                    //else
+                    //    sp.Children.Remove(panels["PART_" + type + name]);
                     if (dontRemove)
+                    {
                         (panels["PART_" + type + name] as TextBlock).Text = newValue;
+                        panels["PART_" + type + name].Visibility = Visibility.Visible;
+                    }
                     else
-                        sp.Children.Remove(panels["PART_" + type + name]);
+                        panels["PART_" + type + name].Visibility = Visibility.Hidden;
                 }
                 SetOrRemove("ExternalName", entityTexts.Item1 != "", entityTexts.Item1 + "/");
                 SetOrRemove("Idx", entityTexts.Item4 != "", entityTexts.Item4);
@@ -282,7 +289,7 @@ namespace ConnectionPlugin.Editors
                     int idx = 0;
                     foreach (dynamic reference in blueprint.Objects)
                     {
-                        if (reference.Internal.__InstanceGuid == classGuid || (internalObj != null && reference.Internal.__InstanceGuid == internalObj))
+                        if (reference.Internal != null && (reference.Internal.__InstanceGuid == classGuid || (internalObj != null && reference.Internal.__InstanceGuid == internalObj)))
                             return "[" + idx + "]";
                         idx++;
                     }

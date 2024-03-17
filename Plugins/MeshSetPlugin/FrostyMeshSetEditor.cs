@@ -155,10 +155,23 @@ namespace MeshSetPlugin
         public List<PreviewMeshSectionData> Sections { get; set; } = new List<PreviewMeshSectionData>();
     }
 
+    [DisplayName("BoundingBox")]
+    [EbxClassMeta(EbxFieldType.Struct)]
+    public class MeshAssetBoundingBox
+    {
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public Vec3 Minimum { get; set; }
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public Vec3 Maximum { get; set; }
+    }
+
     [DisplayName("Mesh Settings")]
     [EbxClassMeta(EbxFieldType.Struct)]
     public class MeshSetMeshSettings
     {
+        [Category("Mesh")]
+        [EbxFieldMeta(EbxFieldType.Struct)]
+        public MeshAssetBoundingBox BoundingBox { get; set; } = new MeshAssetBoundingBox();
         [Category("Mesh")]
         [EbxFieldMeta(EbxFieldType.Struct)]
         public List<PreviewMeshLodData> Lods { get; set; } = new List<PreviewMeshLodData>();
@@ -3135,6 +3148,17 @@ namespace MeshSetPlugin
                     numIndices++;
                 }
 
+                //generate AABB for vertices
+                List<Vector3> vertexPositions = new List<Vector3>();
+                foreach (DbObject vertex in vertices)
+                {
+                    Vector4 tmp = vertex.GetValue<Vector4>("Pos");
+                    Vector4 position = Vector3.Transform(new Vector3(tmp.X, tmp.Y, tmp.Z), sectionMatrix);
+                    vertexPositions.Add(new Vector3(position.X, position.Y, position.Z));
+
+                }
+                meshSet.BoundingBox = AABBFromPoints(vertexPositions).Item1;
+
                 // generate part bounding box
                 /*if(meshSet.Type == MeshType.MeshType_Composite)
                 {
@@ -3360,6 +3384,9 @@ namespace MeshSetPlugin
 
         private void PgMeshSettings_OnModified(object sender, ItemModifiedEventArgs e)
         {
+            meshSet.BoundingBox = new AxisAlignedBox() { min = meshSettings.BoundingBox.Minimum , max = meshSettings.BoundingBox.Maximum};
+            if (App.AssetManager.GetResEntry(meshSet.ResourceId).IsModified)
+                App.AssetManager.ModifyRes(meshSet.ResourceId, meshSet);
             if (e.Item.Path.Contains("Sections"))
             {
                 int lodIdx = getArrayIndexFromPath("Lods", e.Item.Path);
@@ -3842,6 +3869,8 @@ namespace MeshSetPlugin
         {
             meshSettings = new MeshSetMeshSettings();
             dynamic materials = ((dynamic)RootObject).Materials;
+            meshSettings.BoundingBox.Minimum = meshSet.BoundingBox.min;
+            meshSettings.BoundingBox.Maximum = meshSet.BoundingBox.max;
 
             foreach (MeshSetLod lod in meshSet.Lods)
             {
