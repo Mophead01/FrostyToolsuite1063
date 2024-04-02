@@ -617,7 +617,7 @@ namespace FrostyEditor
 
         private void kyberSettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            OptionsWindow win = new OptionsWindow();
+            KyberSettingsWindow win = new KyberSettingsWindow();
             win.ShowDialog();
         }
 
