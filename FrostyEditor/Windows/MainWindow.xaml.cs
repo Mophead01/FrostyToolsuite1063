@@ -94,6 +94,8 @@ namespace FrostyEditor
             RoutedCommand addBookmarkCmd = new RoutedCommand();
             RoutedCommand removeBookmarkCmd = new RoutedCommand();
             RoutedCommand launchGameCmd = new RoutedCommand();
+            RoutedCommand kyberLaunchGameCmd = new RoutedCommand();
+            RoutedCommand kyberSettingsGameCmd = new RoutedCommand();
             RoutedCommand focusAssetFilterCmd = new RoutedCommand();
 
             newCmd.InputGestures.Add(new KeyGesture(Key.N, ModifierKeys.Control));
@@ -103,6 +105,8 @@ namespace FrostyEditor
             addBookmarkCmd.InputGestures.Add(new KeyGesture(Key.B, ModifierKeys.Control));
             removeBookmarkCmd.InputGestures.Add(new KeyGesture(Key.B, ModifierKeys.Control | ModifierKeys.Shift));
             launchGameCmd.InputGestures.Add(new KeyGesture(Key.F5));
+            kyberLaunchGameCmd.InputGestures.Add(new KeyGesture(Key.F6));
+            kyberSettingsGameCmd.InputGestures.Add(new KeyGesture(Key.F7));
             focusAssetFilterCmd.InputGestures.Add(new KeyGesture(Key.F, ModifierKeys.Control));
 
             CommandBindings.Add(new CommandBinding(newCmd, newModMenuItem_Click));
@@ -116,7 +120,11 @@ namespace FrostyEditor
             if (ProfilesLibrary.EnableExecution)
             {
                 CommandBindings.Add(new CommandBinding(launchGameCmd, launchButton_Click));
+                CommandBindings.Add(new CommandBinding(kyberLaunchGameCmd, kyberLaunchButton_Click));
+                CommandBindings.Add(new CommandBinding(kyberSettingsGameCmd, kyberSettingsButton_Click));
                 launchButton.IsEnabled = true;
+                kyberLaunchButton.IsEnabled = true;
+                kyberSettingsButton.IsEnabled = true;
             }
 
             InitGameSpecificMenus();
@@ -395,7 +403,7 @@ namespace FrostyEditor
 
             // get all mods
             List<string> modPaths = new List<string>();
-            
+
             DirectoryInfo modDirectory = new DirectoryInfo($"Mods/{ProfilesLibrary.ProfileName}");
             foreach (string modPath in Directory.EnumerateFiles($"Mods/{ProfilesLibrary.ProfileName}/", "*.fbmod", SearchOption.AllDirectories))
             {
@@ -408,12 +416,12 @@ namespace FrostyEditor
                     modPaths.Add(Path.GetFileName(modPath));
                 }
             }
-            
+
             Random r = new Random();
             string editorModName = $"EditorMod_{r.Next(1000, 9999):D4}.fbmod";
-            
+
             // create temporary editor mod
-            ModSettings editorSettings = new ModSettings { Title = editorModName, Author = "Frosty Editor", Version = App.Version, Category = "Editor"};
+            ModSettings editorSettings = new ModSettings { Title = editorModName, Author = "Frosty Editor", Version = App.Version, Category = "Editor" };
 
             // apply mod
             string additionalArgs = Config.Get<string>("CommandLineArgs", "", ConfigScope.Game) + " ";
@@ -425,7 +433,7 @@ namespace FrostyEditor
             try
             {
                 // run mod applying process
-                FrostyTaskWindow.Show("Launching", "", (task) => 
+                FrostyTaskWindow.Show("Launching", "", (task) =>
                 {
                     try
                     {
@@ -493,6 +501,124 @@ namespace FrostyEditor
             launchButton.IsEnabled = true;
 
             GC.Collect();
+        }
+
+        private void kyberLaunchButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!ProfilesLibrary.EnableExecution)
+                return;
+
+            // setup ability to cancel the process
+            CancellationTokenSource cancelToken = new CancellationTokenSource();
+
+            launchButton.IsEnabled = false;
+
+            // get all mods
+            List<string> modPaths = new List<string>();
+
+            DirectoryInfo modDirectory = new DirectoryInfo($"Mods/{ProfilesLibrary.ProfileName}");
+            foreach (string modPath in Directory.EnumerateFiles($"Mods/{ProfilesLibrary.ProfileName}/", "*.fbmod", SearchOption.AllDirectories))
+            {
+                if (Path.GetFileName(modPath).Contains("EditorMod"))
+                {
+                    File.Delete(modPath);
+                }
+                else
+                {
+                    modPaths.Add(Path.GetFileName(modPath));
+                }
+            }
+
+            Random r = new Random();
+            string editorModName = $"EditorMod_{r.Next(1000, 9999):D4}.fbmod";
+
+            // create temporary editor mod
+            ModSettings editorSettings = new ModSettings { Title = editorModName, Author = "Frosty Editor", Version = App.Version, Category = "Editor" };
+
+            // apply mod
+            string additionalArgs = Config.Get<string>("CommandLineArgs", "", ConfigScope.Game) + " ";
+            FrostyModExecutor executor = new FrostyModExecutor();
+
+            // Set pack
+            App.SelectedPack = "Editor";
+
+            try
+            {
+                // run mod applying process
+                FrostyTaskWindow.Show("Launching", "", (task) =>
+                {
+                    try
+                    {
+                        foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+                        {
+                            executionAction.PreLaunchAction(task.TaskLogger, PluginManagerType.Editor, cancelToken.Token);
+                        }
+
+                        task.Update("Exporting Mod");
+                        ExportMod(editorSettings, $"Mods/{ProfilesLibrary.ProfileName}/{editorModName}", true, cancelToken.Token);
+                        modPaths.Add(editorModName);
+                        App.Logger.Log($"Editor Mod Saved As {editorModName}");
+
+                        cancelToken.Token.ThrowIfCancellationRequested();
+
+                        // Delete mods.json
+                        task.Update("Deleting mods.json");
+
+                        string gamePatchPath = "Patch";
+                        if (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa17 || ProfilesLibrary.DataVersion == (int)ProfileVersion.DragonAgeInquisition || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield4 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeed || ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesGardenWarfare2 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeedRivals)
+                        {
+                            gamePatchPath = Path.Combine("Update", "Patch", "Data");
+                        }
+                        else if (ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesBattleforNeighborville || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield5)
+                        {
+                            gamePatchPath = "Data"; //bfn and bfv dont have a patch directory
+                        }
+
+                        string modsJsonPath = Path.Combine(App.FileSystem.BasePath, "ModData", App.SelectedPack, gamePatchPath, "mods.json");
+                        if (File.Exists(modsJsonPath))
+                        {
+                            File.Delete(modsJsonPath);
+                        }
+
+                        executor.Run(App.FileSystem, cancelToken.Token, task.TaskLogger, $"Mods/{ProfilesLibrary.ProfileName}/", App.SelectedPack, additionalArgs.Trim(), modPaths.ToArray());
+
+                        foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+                        {
+                            executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.Editor, cancelToken.Token);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // swollow
+
+                        foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+                        {
+                            executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.ModManager, cancelToken.Token);
+                        }
+                    }
+
+                }, showCancelButton: true, cancelCallback: (task) => cancelToken.Cancel());
+            }
+            catch (OperationCanceledException)
+            {
+                // process was cancelled
+                App.Logger.Log("Launch Cancelled");
+            }
+
+            // remove editor mod
+            FileInfo editorMod = new FileInfo($"Mods/{ProfilesLibrary.ProfileName}/{editorModName}");
+            if (editorMod.Exists)
+                editorMod.Delete();
+
+            launchButton.IsEnabled = true;
+
+            GC.Collect();
+        }
+
+        private void kyberSettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            OptionsWindow win = new OptionsWindow();
+            win.ShowDialog();
         }
 
         private void unimplementedMenuItem_Click(object sender, RoutedEventArgs e)

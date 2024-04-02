@@ -303,6 +303,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Recent.png" />
+    <Resource Include="Images\Settings.png" />
     <Content Include="Resources\Icons\fbproject.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

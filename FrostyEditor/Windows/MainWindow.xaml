@@ -300,6 +300,43 @@
                                 </Button>
                             </StackPanel>
                         </Border>
+                        <!-- Kyber Launch -->
+                        <Border Background="{StaticResource ControlBackground}"
+                                Margin="1 0 0 0"
+                                DockPanel.Dock="Left"
+                                RenderOptions.EdgeMode="Aliased">
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="6,2,6,2">
+                                <Button x:Name="kyberLaunchButton"
+                                        Margin="0"
+                                        Click="kyberLaunchButton_Click"
+                                        ToolTip="Launch game with Kyber"
+                                        IsEnabled="false">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="4 0 4 0">
+                                        <Image Grid.Column="0"
+                                               Source="../Images/Play.png"
+                                               Width="16" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="Kyber"
+                                                   VerticalAlignment="Center"
+                                                   Margin="4 0 0 0" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="kyberSettingsButton"
+                                        Margin="0"
+                                        Click="kyberSettingsButton_Click"
+                                        ToolTip="Modify Kyber launch settings."
+                                        IsEnabled="false">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="4 0 4 0">
+                                        <Image Grid.Column="0"
+                                               Source="../Images/Settings.png"
+                                               Width="16" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
                         <!-- Filler -->
                         <Border Background="Transparent"
                                 Margin="1,0,0,0"
