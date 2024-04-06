@@ -662,11 +662,11 @@ namespace FrostySdk
 
                 // now try to load SDK
                 if (File.Exists("Profiles/" + ProfilesLibrary.SDKFilename + ".dll"))
-                    existingAssembly = Assembly.Load(new AssemblyName(ModuleName));
+                    existingAssembly = Assembly.LoadFrom("Profiles/" + ProfilesLibrary.SDKFilename + ".dll");
             }
 
             AssemblyName name = new AssemblyName(ModuleName);
-            assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
+            assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule(ModuleName);
         }
 
