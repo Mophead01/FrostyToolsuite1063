@@ -15,37 +15,81 @@ namespace FrostyEditor.Windows
 {
     public static class KyberSettings
     {
-        public static string CliDirectory { get { return Config.Get("Kyber_CliDirectory", "", ConfigScope.Game); } set { Config.Add("Kyber_CliDirectory", value, ConfigScope.Game); } }
-        public static string GameMode { get { return Config.Get("Kyber_SelectedMode", "Mode1", ConfigScope.Game); } set { Config.Add("Kyber_SelectedMode", value, ConfigScope.Game); } }
-        public static string Level { get { return Config.Get("Kyber_SelectedLevel", "S6_2/Geonosis_02/Levels/Geonosis_02/Geonosis_02", ConfigScope.Game); } set { Config.Add("Kyber_SelectedLevel", value, ConfigScope.Game); } }
-        public static int TeamId { get { return Config.Get("Kyber_TeamId", 1, ConfigScope.Game); } set { Config.Add("Kyber_TeamId", value, ConfigScope.Game); } }
-        public static string AutoplayerType { get { return Config.Get("Kyber_AutoplayerType", "Gamemode Tied", ConfigScope.Game); } set { Config.Add("Kyber_AutoplayerType", value, ConfigScope.Game); } }
-        public static int Team1Bots { get { return Config.Get("Kyber_Team1Bots", 20, ConfigScope.Game); } set { Config.Add("Kyber_Team1Bots", value, ConfigScope.Game); } }
-        public static int Team2Bots { get { return Config.Get("Kyber_Team2Bots", 20, ConfigScope.Game); } set { Config.Add("Kyber_Team2Bots", value, ConfigScope.Game); } }
-        public static string SelectedLoadOrder { get { return Config.Get("Kyber_SelectedLoadOrder", "No Order", ConfigScope.Game); } set { Config.Add("Kyber_SelectedLoadOrder", value, ConfigScope.Game); } }
-        public static bool Autostart { get { return Config.Get("Kyber_AutoStart", false, ConfigScope.Game); } set { Config.Add("Kyber_AutoStart", false, ConfigScope.Game); } }
+        public static string CliDirectory { get { return Config.Get("Kyber_CliDirectory", "", ConfigScope.Global); } set { Config.Add("Kyber_CliDirectory", value, ConfigScope.Global); } }
+        public static string GameMode { get { return Config.Get("Kyber_SelectedMode", "Mode1", ConfigScope.Global); } set { Config.Add("Kyber_SelectedMode", value, ConfigScope.Global); } }
+        public static string Level { get { return Config.Get("Kyber_SelectedLevel", "S6_2/Geonosis_02/Levels/Geonosis_02/Geonosis_02", ConfigScope.Global); } set { Config.Add("Kyber_SelectedLevel", value, ConfigScope.Global); } }
+        public static int TeamId { get { return Config.Get("Kyber_TeamId", 1, ConfigScope.Global); } set { Config.Add("Kyber_TeamId", value, ConfigScope.Global); } }
+        public static string AutoplayerType { get { return Config.Get("Kyber_AutoplayerType", "Gamemode Tied", ConfigScope.Global); } set { Config.Add("Kyber_AutoplayerType", value, ConfigScope.Global); } }
+        public static int Team1Bots { get { return Config.Get("Kyber_Team1Bots", 20, ConfigScope.Global); } set { Config.Add("Kyber_Team1Bots", value, ConfigScope.Global); } }
+        public static int Team2Bots { get { return Config.Get("Kyber_Team2Bots", 20, ConfigScope.Global); } set { Config.Add("Kyber_Team2Bots", value, ConfigScope.Global); } }
+        public static string SelectedLoadOrder { get { return Config.Get("Kyber_SelectedLoadOrder", "No Order", ConfigScope.Global); } set { Config.Add("Kyber_SelectedLoadOrder", value, ConfigScope.Global); } }
+        public static bool Autostart { get { return Config.Get("Kyber_AutoStart", false, ConfigScope.Global); } set { Config.Add("Kyber_AutoStart", value, ConfigScope.Global); } }
         public static List<string> LaunchCommands {
             get {
-                string strList = Config.Get<string>("Kyber_LaunchCommands", null, ConfigScope.Game);
+                string strList = Config.Get<string>("Kyber_LaunchCommands", null, ConfigScope.Global);
                 if (strList == null)
                     return new List<string>();
                 else
                     return strList.Split('$').ToList();
             }
             set {
-                Config.Add("Kyber_LaunchCommands", string.Join("$", value.ToList()), ConfigScope.Game);
+                Config.Add("Kyber_LaunchCommands", string.Join("$", value.ToList()), ConfigScope.Global);
             }
         }
     }
+
+    public class KyberJsonSettings
+    {
+        public List<KyberGamemodeJsonSettings> GamemodeOverrides { get; set; }
+        public List<KyberLevelJsonSettings> LevelOverrides { get; set; }
+        public List<KyberLoadOrderJsonSettings> LoadOrders { get; set; }
+        public KyberJsonSettings()
+        {
+
+        }
+    }
+    public class KyberGamemodeJsonSettings
+    {
+        public string Name { get; set; }
+        public string ModeId { get; set; }
+        public int PlayerCount { get; set; }
+        public KyberGamemodeJsonSettings()
+        {
+
+        }
+    }
+    public class KyberLevelJsonSettings
+    {
+        public string Name { get; set; }
+        public string LevelId { get; set; }
+        public List<string> ModeIds { get; set; }
+        public KyberLevelJsonSettings() 
+        {
+
+        }
+    }
+    public class KyberLoadOrderJsonSettings
+    {
+        public string Name { get; set; }
+        public List<string> FbmodNames { get; set; }
+        public KyberLoadOrderJsonSettings()
+        {
+
+        }
+    }
+
+
     /// <summary>
     /// Interaction logic for KyberSettingsWindow.xaml
     /// </summary>
     public partial class KyberSettingsWindow : FrostyDockableWindow
     {
         List<(string, string, List<(string, string)>, int)> gameModesData = new List<(string, string, List<(string, string)>, int)> ();
+        KyberJsonSettings jsonSettings = new KyberJsonSettings();
 
-        public KyberSettingsWindow(FrostyProject inProject = null)
+        public KyberSettingsWindow(KyberJsonSettings jsonSettings)
         {
+            this.jsonSettings = jsonSettings;
             InitializeComponent();
 
             Loaded += ModSettingsWindow_Loaded;
@@ -112,6 +156,7 @@ namespace FrostyEditor.Windows
                 team2AutoplayerCountComboBox.Items.Add((int)i);
             }
             loadOrderComboBox.Items.Add("No Order");
+            jsonSettings.LoadOrders.ForEach(loadOrder => loadOrderComboBox.Items.Add(loadOrder.Name));
 
             autoplayerTypeComboBox.Items.Add("No Bots");
             autoplayerTypeComboBox.Items.Add("Dummy Bots");
@@ -146,9 +191,18 @@ namespace FrostyEditor.Windows
                                 aurabesh = "Death Star II";
 
                             string levName = $"{aurabesh} - {ConvertToTitleCase(LocalizedStringDatabase.Current.GetString((uint)levRoot.LevelName.Internal.StringHash))}";
+
+                            jsonSettings.LevelOverrides.Where(levelOverride => levelOverride.LevelId == levRoot.LevelId).ToList().ForEach(levelOverride => levName = levelOverride.Name);
                             levelPairs.Add((levRoot.LevelId, levName));
                         }
                     }
+                    foreach (KyberLevelJsonSettings levelJsonSettings in jsonSettings.LevelOverrides.Where(levelOverride => levelOverride.ModeIds.Contains(modeRoot.GameModeId)).ToList()) 
+                    {
+                        if (levelPairs.Select(pair => pair.Item1).Contains(levelJsonSettings.LevelId))
+                            continue;
+                        levelPairs.Add((levelJsonSettings.LevelId, levelJsonSettings.Name));
+                    }
+
                     levelPairs = levelPairs.OrderBy(item => item.Item2).ToList();
                     List<string> duplicates = levelPairs.Select(item => item.Item2).GroupBy(x => x).Where(group => group.Count() > 1).Select(group => group.Key).ToList();
                     for (int i = 0; i < levelPairs.Count; i++)
@@ -157,10 +211,32 @@ namespace FrostyEditor.Windows
                         if (duplicates.Contains(pair.Item2))
                             levelPairs[i] = (pair.Item1, $"{pair.Item2} [{pair.Item1}]");
                     }
-
-                    gameModesData.Add((modeRoot.GameModeId, modeName, levelPairs, modeRoot.NumberOfPlayers));
+                    int playerCount = modeRoot.NumberOfPlayers;
+                    foreach (KyberGamemodeJsonSettings jsonGamemode in jsonSettings.GamemodeOverrides.Where(gamemodeInfo => gamemodeInfo.ModeId == modeRoot.GameModeId))
+                    {
+                        modeName = $"{jsonGamemode.Name} \t[{modeRoot.GameModeId}]";
+                        playerCount = jsonGamemode.PlayerCount;
+                    }
+                    if (modeName.StartsWith("DO NOT USE"))
+                        continue;
+                    gameModesData.Add((modeRoot.GameModeId, modeName, levelPairs, playerCount));
                 }
             }
+            foreach(KyberGamemodeJsonSettings jsonGamemode in jsonSettings.GamemodeOverrides.Where(gamemodeInfo => !gameModesData.Select(modeData => modeData.Item1).Contains(gamemodeInfo.ModeId)))
+            {
+                List<(string, string)> levelPairs = new List<(string, string)>();
+                foreach (KyberLevelJsonSettings levelJsonSettings in jsonSettings.LevelOverrides.Where(levelOverride => levelOverride.ModeIds.Contains(jsonGamemode.ModeId)).ToList())
+                {
+                    if (levelPairs.Select(pair => pair.Item1).Contains(levelJsonSettings.LevelId))
+                        continue;
+                    levelPairs.Add((levelJsonSettings.LevelId, levelJsonSettings.Name));
+                }
+                if (jsonGamemode.Name.StartsWith("DO NOT USE"))
+                    continue;
+                gameModesData.Add((jsonGamemode.ModeId, jsonGamemode.Name, levelPairs, jsonGamemode.PlayerCount));
+            }
+
+
             gameModesData = gameModesData.OrderBy(data => data.Item2).ToList();
             gameModesData.Insert(0, ("NOGAMEMODE", "Main Menu \t[FRONTEND]", new List<(string, string)>() { ("win32/Levels/Frontend/Frontend", "Frontend")}, 0));
             foreach (var item in gameModesData)
@@ -180,7 +256,7 @@ namespace FrostyEditor.Windows
             team1AutoplayerCountComboBox.SelectedIndex = KyberSettings.Team1Bots;
             team2AutoplayerCountComboBox.SelectedIndex = KyberSettings.Team2Bots;
             autoplayerTypeComboBox.SelectedIndex = autoplayerTypeComboBox.Items.Contains(KyberSettings.AutoplayerType) ? autoplayerTypeComboBox.Items.IndexOf(KyberSettings.AutoplayerType) : 0;
-            launchCommandTextBox.Text = string.Join("\r\n", KyberSettings.LaunchCommands);
+            launchCommandTextBox.Text = string.Join("\n", KyberSettings.LaunchCommands);
 
             lastGamemodeIndex = gamemodeComboBox.SelectedIndex;
         }
@@ -203,6 +279,18 @@ namespace FrostyEditor.Windows
 
         private void saveButton_Click(object sender, System.Windows.RoutedEventArgs e)
         {
+            KyberSettings.CliDirectory = kyberCliTextBox.Text;
+            KyberSettings.SelectedLoadOrder = loadOrderComboBox.Text;
+            KyberSettings.GameMode = gameModesData[gamemodeComboBox.SelectedIndex].Item1;
+            KyberSettings.Level = gameModesData[gamemodeComboBox.SelectedIndex].Item3[levelComboBox.SelectedIndex].Item1;
+            KyberSettings.Autostart = (autoStartComboBox.Text == "Enabled");
+            KyberSettings.TeamId = teamIdComboBox.SelectedIndex;
+            KyberSettings.AutoplayerType = autoplayerTypeComboBox.Text;
+            KyberSettings.Team1Bots = team1AutoplayerCountComboBox.SelectedIndex;
+            KyberSettings.Team2Bots = team2AutoplayerCountComboBox.SelectedIndex;
+            KyberSettings.LaunchCommands = launchCommandTextBox.Text.Split('\n').ToList();
+            Config.Save();
+
             DialogResult = true;
             Close();
         }

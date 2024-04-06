@@ -32,6 +32,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Navigation;
+using Newtonsoft.Json;
+using SharpDX.DirectWrite;
+using System.Diagnostics;
 
 namespace FrostyEditor
 {
@@ -502,46 +505,97 @@ namespace FrostyEditor
 
             GC.Collect();
         }
+        private KyberJsonSettings GetKyberJsonSettings()
+        {
+            string jsonName = "Mods/Kyber/Overrides.json";
+            if (!File.Exists(jsonName))
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(jsonName)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(jsonName));
+                App.Logger.Log("No Kyber Overrides.json file found, creating one with generic settings");
+                KyberJsonSettings baseJsonSettings = new KyberJsonSettings();
 
+                List<KyberGamemodeJsonSettings> baseModes = new List<KyberGamemodeJsonSettings>()
+                {
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Example Custom Mode", ModeId = "ExampleCustomMode", PlayerCount = 40},
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Clone Wars", ModeId = "Conquest1CloneWars", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Original Trilogy", ModeId = "Conquest1OriginalTrilogy", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Sequel Trilogy", ModeId = "Conquest1SequelTrilogy", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Order 66", ModeId = "Conquest1Order66", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Map Specific", ModeId = "Conquest1MapSpecific", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Conquest Sandbox", ModeId = "Conquest1Sandbox", PlayerCount = 64 },
+                    new KyberGamemodeJsonSettings() { Name = "Modded Gamemode - Extraction HvsV", ModeId = "ExtractionHvsV", PlayerCount = 6 },
+                    new KyberGamemodeJsonSettings() { Name = "Custom Arcade - Blast", ModeId = "SkirmishBlast", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Custom Arcade - Onslaught", ModeId = "SkirmishOnslaught", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Custom Arcade - Duel", ModeId = "SkirmishDuel", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Custom Arcade - Starfighter Blast", ModeId = "SkirmishSpaceBlast", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Custom Arcade - Starfighter Onslaught", ModeId = "SkirmishSpaceOnslaught" , PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Instant Action - Supremacy", ModeId = "Mode1", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Instant Action - Missions Attack", ModeId = "ModeF", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Instant Action - Missions Defend", ModeId = "ModeE", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Galactic Assault", ModeId = "PlanetaryBattles", PlayerCount = 40},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Supremacy", ModeId = "Mode1", PlayerCount = 64},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - COOP Attack", ModeId = "Mode9", PlayerCount = 20},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - COOP Defend", ModeId = "ModeDefend", PlayerCount = 20},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Ewok Hunt", ModeId = "Mode3", PlayerCount = 0},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Extraction", ModeId = "Mode5", PlayerCount = 16},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Hero Showdown", ModeId = "Mode6", PlayerCount = 4},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Starfighter HvsV", ModeId = "Mode7", PlayerCount = 6},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Jetpack Cargo", ModeId = "ModeC", PlayerCount = 16},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Strike", ModeId = "PlanetaryMissions", PlayerCount = 16},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Blast", ModeId = "Blast", PlayerCount = 16},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Heroes Versus Villains", ModeId = "HeroesVersusVillains", PlayerCount = 6},
+                    new KyberGamemodeJsonSettings() { Name = "Multiplayer - Starfighter Assault", ModeId = "SpaceBattle", PlayerCount = 24},
+                    new KyberGamemodeJsonSettings() { Name = "DO NOT USE - ModeX", ModeId = "ModeX", PlayerCount = 0},
+                };
+                baseJsonSettings.LoadOrders =new List<KyberLoadOrderJsonSettings>() { (new KyberLoadOrderJsonSettings() { FbmodNames = new List<string>() { "Instant Online Overhaul", "KyberMod" }, Name = "Example Load Order" }) };
+                baseJsonSettings.GamemodeOverrides = baseModes;
+                baseJsonSettings.LevelOverrides = new List<KyberLevelJsonSettings>() { (new KyberLevelJsonSettings() { Name = "Custom Level Example", LevelId = "Level/Directory/Goes/Here", ModeIds = new List<string>() { "Mode1", "Mode8" } }) };
+                File.WriteAllText(jsonName, JsonConvert.SerializeObject(baseJsonSettings, new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented
+                }));
+            }
+            return JsonConvert.DeserializeObject<KyberJsonSettings>(File.ReadAllText(jsonName));
+        }
+
+        class KyberModsJson
+        {
+            public string basePath { get; set; }
+            public List<string> modPaths { get; set; }
+        }
         private void kyberLaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!ProfilesLibrary.EnableExecution)
-                return;
-
-            // setup ability to cancel the process
-            CancellationTokenSource cancelToken = new CancellationTokenSource();
-
-            launchButton.IsEnabled = false;
-
-            // get all mods
-            List<string> modPaths = new List<string>();
-
-            DirectoryInfo modDirectory = new DirectoryInfo($"Mods/{ProfilesLibrary.ProfileName}");
-            foreach (string modPath in Directory.EnumerateFiles($"Mods/{ProfilesLibrary.ProfileName}/", "*.fbmod", SearchOption.AllDirectories))
+            KyberJsonSettings jsonSettings = GetKyberJsonSettings();
+            if (!File.Exists(KyberSettings.CliDirectory))
             {
-                if (Path.GetFileName(modPath).Contains("EditorMod"))
+                FrostyOpenFileDialog ofd = new FrostyOpenFileDialog("Set Kyber CLI", "*.exe (kyber_cli)|*.exe", "Kyber CLI");
+                if (ofd.ShowDialog())
                 {
-                    File.Delete(modPath);
+                    if (Path.GetFileNameWithoutExtension(ofd.FileName) != "kyber_cli")
+                    {
+                        App.Logger.LogError($"Kyber Launcher:\tAborting Launch:\tCould not find kyber_cli.exe");
+                        return;
+                    }
+                    else
+                    {
+                        KyberSettings.CliDirectory = ofd.FileName;
+                        Config.Save();
+                    }
                 }
                 else
                 {
-                    modPaths.Add(Path.GetFileName(modPath));
+                    App.Logger.LogError($"Kyber Launcher:\tAborting Launch:\tCould not find kyber_cli.exe");
+                    return;
                 }
             }
-
-            Random r = new Random();
-            string editorModName = $"EditorMod_{r.Next(1000, 9999):D4}.fbmod";
-
+            CancellationTokenSource cancelToken = new CancellationTokenSource();
+            string editorModName = "KyberMod.fbmod";
             // create temporary editor mod
             ModSettings editorSettings = new ModSettings { Title = editorModName, Author = "Frosty Editor", Version = App.Version, Category = "Editor" };
 
-            // apply mod
-            string additionalArgs = Config.Get<string>("CommandLineArgs", "", ConfigScope.Game) + " ";
-            FrostyModExecutor executor = new FrostyModExecutor();
 
-            // Set pack
-            App.SelectedPack = "Editor";
-
+            bool cancelled = false;
             try
             {
                 // run mod applying process
@@ -555,42 +609,13 @@ namespace FrostyEditor
                         }
 
                         task.Update("Exporting Mod");
-                        ExportMod(editorSettings, $"Mods/{ProfilesLibrary.ProfileName}/{editorModName}", true, cancelToken.Token);
-                        modPaths.Add(editorModName);
+                        ExportMod(editorSettings, $"Mods/Kyber/{editorModName}", true, cancelToken.Token);
                         App.Logger.Log($"Editor Mod Saved As {editorModName}");
-
-                        cancelToken.Token.ThrowIfCancellationRequested();
-
-                        // Delete mods.json
-                        task.Update("Deleting mods.json");
-
-                        string gamePatchPath = "Patch";
-                        if (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa17 || ProfilesLibrary.DataVersion == (int)ProfileVersion.DragonAgeInquisition || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield4 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeed || ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesGardenWarfare2 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeedRivals)
-                        {
-                            gamePatchPath = Path.Combine("Update", "Patch", "Data");
-                        }
-                        else if (ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesBattleforNeighborville || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield5)
-                        {
-                            gamePatchPath = "Data"; //bfn and bfv dont have a patch directory
-                        }
-
-                        string modsJsonPath = Path.Combine(App.FileSystem.BasePath, "ModData", App.SelectedPack, gamePatchPath, "mods.json");
-                        if (File.Exists(modsJsonPath))
-                        {
-                            File.Delete(modsJsonPath);
-                        }
-
-                        executor.Run(App.FileSystem, cancelToken.Token, task.TaskLogger, $"Mods/{ProfilesLibrary.ProfileName}/", App.SelectedPack, additionalArgs.Trim(), modPaths.ToArray());
-
-                        foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
-                        {
-                            executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.Editor, cancelToken.Token);
-                        }
                     }
                     catch (OperationCanceledException)
                     {
+                        cancelled = true;
                         // swollow
-
                         foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
                         {
                             executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.ModManager, cancelToken.Token);
@@ -603,21 +628,221 @@ namespace FrostyEditor
             {
                 // process was cancelled
                 App.Logger.Log("Launch Cancelled");
+                cancelled = true;
+            }
+            if (!cancelled)
+            {
+                //
+                // Export Mod Order Json
+                //
+
+                KyberModsJson exportJson = new KyberModsJson();
+                string basePath = $@"{(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)).Replace("\\", @"/")}/Mods/Kyber";
+                exportJson.basePath = basePath;
+
+                List<string> fbmodNames = new List<string>();
+                foreach (KyberLoadOrderJsonSettings loadOrder in jsonSettings.LoadOrders.Where(order => order.Name == KyberSettings.SelectedLoadOrder))
+                {
+                    foreach (string mod in loadOrder.FbmodNames)
+                        fbmodNames.Add(mod.EndsWith(".fbmod") ? mod : $"{mod}.fbmod");
+                }
+                if (!fbmodNames.Contains(editorModName))
+                    fbmodNames.Add(editorModName);
+
+                List<string> unfoundMods = new List<string>();
+                exportJson.modPaths = new List<string>();
+                foreach (string modName in new List<string>(fbmodNames))
+                {
+                    if (!File.Exists($@"{basePath}/{modName}"))
+                    {
+                        unfoundMods.Add(modName);
+                        fbmodNames.Remove(modName);
+                    }
+                    else
+                        exportJson.modPaths.Add(modName);
+                }
+
+                if (unfoundMods.Count > 0)
+                {
+                    App.Logger.LogError($"Kyber Launcher:\tCould not find following \"{KyberSettings.SelectedLoadOrder}\" load order mods:\t{string.Join(", \t", unfoundMods)}");
+                }
+
+                File.WriteAllText("Mods/Kyber/Kyber-Launch.json", JsonConvert.SerializeObject(exportJson, new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented
+                }));
+
+                //
+                // Export Kyber commands
+                //
+                List<string> commands = new List<string>();
+                if (KyberSettings.AutoplayerType == "Dummy Bots")
+                {
+                    commands.Add($"Whiteshark.AutoBalanceTeamsOnNeutral 1");
+                    commands.Add($"AutoPlayers.ForcedServerAutoPlayerCount {KyberSettings.Team1Bots + KyberSettings.Team2Bots}");
+                }
+                else if (KyberSettings.AutoplayerType == "Gamemode Tied")
+                {
+                    commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam1 {KyberSettings.Team1Bots}");
+                    commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam2 {KyberSettings.Team2Bots}");
+                }
+
+                commands.Add($"Kyber.SetTeamByIndex 0 {KyberSettings.TeamId}");
+                if (KyberSettings.Autostart)
+                    commands.Add($"Kyber.startgame");  //commands.Add($"Kyber.Delay 5 startgame");
+                foreach(string command in KyberSettings.LaunchCommands)
+                    commands.Add($"{command}");
+
+                using (StreamWriter writer = new StreamWriter("Mods/Kyber/Kyber-Commands.txt"))
+                {
+                    foreach (string str in commands)
+                        writer.WriteLine(str);
+                }
+
+                //
+                //  Execute kyber_cli.exe
+                //
+
+                string cliCommand = $"start_server --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
+                ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
+                psi.Arguments = cliCommand;
+                psi.RedirectStandardInput = true;
+                psi.RedirectStandardOutput = true;
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = false; // Show cmd window
+                psi.WorkingDirectory = Path.GetDirectoryName(KyberSettings.CliDirectory); // Set the working directory here
+
+                // Start the process and read the output
+                Process process = Process.Start(psi);
+                //if (process != null)
+                //{
+                //    process.StandardInput.WriteLine("exit");
+
+                //    // Read the output
+                //    string result = process.StandardOutput.ReadToEnd();
+                //    App.Logger.Log(result);
+
+                //    //process.WaitForExit();
+                //    //process.Close();
+                //}
             }
 
-            // remove editor mod
-            FileInfo editorMod = new FileInfo($"Mods/{ProfilesLibrary.ProfileName}/{editorModName}");
-            if (editorMod.Exists)
-                editorMod.Delete();
-
-            launchButton.IsEnabled = true;
-
             GC.Collect();
+
+
+            //if (!ProfilesLibrary.EnableExecution)
+            //    return;
+
+            //// setup ability to cancel the process
+            //CancellationTokenSource cancelToken = new CancellationTokenSource();
+
+            //launchButton.IsEnabled = false;
+
+            //// get all mods
+            //List<string> modPaths = new List<string>();
+
+            //DirectoryInfo modDirectory = new DirectoryInfo($"Mods/{ProfilesLibrary.ProfileName}");
+            //foreach (string modPath in Directory.EnumerateFiles($"Mods/{ProfilesLibrary.ProfileName}/", "*.fbmod", SearchOption.AllDirectories))
+            //{
+            //    if (Path.GetFileName(modPath).Contains("EditorMod"))
+            //    {
+            //        File.Delete(modPath);
+            //    }
+            //    else
+            //    {
+            //        modPaths.Add(Path.GetFileName(modPath));
+            //    }
+            //}
+
+            //Random r = new Random();
+            //string editorModName = $"EditorMod_{r.Next(1000, 9999):D4}.fbmod";
+
+            //// create temporary editor mod
+            //ModSettings editorSettings = new ModSettings { Title = editorModName, Author = "Frosty Editor", Version = App.Version, Category = "Editor" };
+
+            //// apply mod
+            //string additionalArgs = Config.Get<string>("CommandLineArgs", "", ConfigScope.Game) + " ";
+            //FrostyModExecutor executor = new FrostyModExecutor();
+
+            //// Set pack
+            //App.SelectedPack = "Editor";
+
+            //try
+            //{
+            //    // run mod applying process
+            //    FrostyTaskWindow.Show("Launching", "", (task) =>
+            //    {
+            //        try
+            //        {
+            //            foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+            //            {
+            //                executionAction.PreLaunchAction(task.TaskLogger, PluginManagerType.Editor, cancelToken.Token);
+            //            }
+
+            //            task.Update("Exporting Mod");
+            //            ExportMod(editorSettings, $"Mods/{ProfilesLibrary.ProfileName}/{editorModName}", true, cancelToken.Token);
+            //            modPaths.Add(editorModName);
+            //            App.Logger.Log($"Editor Mod Saved As {editorModName}");
+
+            //            cancelToken.Token.ThrowIfCancellationRequested();
+
+            //            // Delete mods.json
+            //            task.Update("Deleting mods.json");
+
+            //            string gamePatchPath = "Patch";
+            //            if (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa17 || ProfilesLibrary.DataVersion == (int)ProfileVersion.DragonAgeInquisition || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield4 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeed || ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesGardenWarfare2 || ProfilesLibrary.DataVersion == (int)ProfileVersion.NeedForSpeedRivals)
+            //            {
+            //                gamePatchPath = Path.Combine("Update", "Patch", "Data");
+            //            }
+            //            else if (ProfilesLibrary.DataVersion == (int)ProfileVersion.PlantsVsZombiesBattleforNeighborville || ProfilesLibrary.DataVersion == (int)ProfileVersion.Battlefield5)
+            //            {
+            //                gamePatchPath = "Data"; //bfn and bfv dont have a patch directory
+            //            }
+
+            //            string modsJsonPath = Path.Combine(App.FileSystem.BasePath, "ModData", App.SelectedPack, gamePatchPath, "mods.json");
+            //            if (File.Exists(modsJsonPath))
+            //            {
+            //                File.Delete(modsJsonPath);
+            //            }
+
+            //            executor.Run(App.FileSystem, cancelToken.Token, task.TaskLogger, $"Mods/{ProfilesLibrary.ProfileName}/", App.SelectedPack, additionalArgs.Trim(), modPaths.ToArray());
+
+            //            foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+            //            {
+            //                executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.Editor, cancelToken.Token);
+            //            }
+            //        }
+            //        catch (OperationCanceledException)
+            //        {
+            //            // swollow
+
+            //            foreach (ExecutionAction executionAction in App.PluginManager.ExecutionActions)
+            //            {
+            //                executionAction.PostLaunchAction(task.TaskLogger, PluginManagerType.ModManager, cancelToken.Token);
+            //            }
+            //        }
+
+            //    }, showCancelButton: true, cancelCallback: (task) => cancelToken.Cancel());
+            //}
+            //catch (OperationCanceledException)
+            //{
+            //    // process was cancelled
+            //    App.Logger.Log("Launch Cancelled");
+            //}
+
+            //// remove editor mod
+            //FileInfo editorMod = new FileInfo($"Mods/{ProfilesLibrary.ProfileName}/{editorModName}");
+            //if (editorMod.Exists)
+            //    editorMod.Delete();
+
+            //launchButton.IsEnabled = true;
+
+            //GC.Collect();
         }
 
         private void kyberSettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            KyberSettingsWindow win = new KyberSettingsWindow();
+            KyberSettingsWindow win = new KyberSettingsWindow(GetKyberJsonSettings());
             win.ShowDialog();
         }
 
