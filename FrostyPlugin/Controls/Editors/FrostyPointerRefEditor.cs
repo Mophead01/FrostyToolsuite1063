@@ -686,7 +686,9 @@ namespace Frosty.Core.Controls.Editors
         private FrostyAssetEditor GetParentEditor()
         {
             DependencyObject parent = VisualTreeHelper.GetParent(this);
-            while (!(parent.GetType().IsSubclassOf(typeof(FrostyAssetEditor)) || parent is FrostyAssetEditor))
+            if (parent == null)
+                return null;
+            while (parent != null && !(parent.GetType().IsSubclassOf(typeof(FrostyAssetEditor)) || parent is FrostyAssetEditor))
             {
                 if (parent is FrostyDockableWindow)
                 {
@@ -697,6 +699,8 @@ namespace Frosty.Core.Controls.Editors
                     parent = VisualTreeHelper.GetParent(parent);
                 }
             }
+            if (parent == null)
+                return null;
             return (parent as FrostyAssetEditor);
         }
 

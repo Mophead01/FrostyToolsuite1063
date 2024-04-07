@@ -151,6 +151,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Windows\KyberSettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Windows\ModSettingsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -170,6 +174,9 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Windows\KyberSettingsWindow.xaml.cs">
+      <DependentUpon>KyberSettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\ModSettingsWindow.xaml.cs">
       <DependentUpon>ModSettingsWindow.xaml</DependentUpon>
@@ -303,6 +310,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Recent.png" />
+    <Resource Include="Images\Settings.png" />
     <Content Include="Resources\Icons\fbproject.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
