@@ -972,6 +972,7 @@ namespace Frosty.Core
                                 {
                                     // store as modified resource data object
                                     entry.ModifiedEntry.DataObject = ModifiedResource.Read(data);
+                                    entry.ModifiedEntry.Sha1 = Utils.GenerateSha1(data);
                                 }
                                 else
                                 {
@@ -989,6 +990,7 @@ namespace Frosty.Core
                                         if (entry.IsAdded)
                                             entry.Type = asset.RootObject.GetType().Name;
                                         entry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
+                                        entry.ModifiedEntry.Sha1 = Utils.GenerateSha1(data);
                                     }
                                 }
 
@@ -1524,6 +1526,30 @@ namespace Frosty.Core
 
             if (!modifiedJson.UsesCustomHandlerData)
             {
+                using (NativeReader reader = new NativeReader(new FileStream(binName, FileMode.Open, FileAccess.Read)))
+                {
+                    byte[] data = reader.ReadToEnd();
+                    using (EbxReader ebxReader = EbxReader.CreateProjectReader(new MemoryStream(data)))
+                    {
+                        EbxAsset asset = ebxReader.ReadAsset<EbxAsset>();
+                        if (refEntry.IsAdded)
+                        {
+                            if (((dynamic)asset.RootObject).Name != refEntry.Name)
+                            {
+                                ((dynamic)asset.RootObject).Name = refEntry.Name;
+                                refEntry.IsDirty = true;
+                                refEntry.ModifiedEntry.IsDirty = true;
+                            }
+                        }
+                        refEntry.ModifiedEntry.DataObject = asset;
+                        refEntry.ModifiedEntry.Sha1 = Utils.GenerateSha1(data);
+
+                        if (refEntry.IsAdded)
+                            refEntry.Type = asset.RootObject.GetType().Name;
+                        refEntry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
+                    }
+
+                }
                 using (EbxReader ebxReader = EbxReader.CreateProjectReader(new FileStream(binName, FileMode.Open, FileAccess.Read)))
                 {
                     EbxAsset asset = ebxReader.ReadAsset<EbxAsset>();
@@ -1538,6 +1564,8 @@ namespace Frosty.Core
                     }
                     refEntry.ModifiedEntry.DataObject = asset;
 
+                    refEntry.ModifiedEntry.Sha1 = Utils.GenerateSha1(refEntry.ModifiedEntry.Data);
+
                     if (refEntry.IsAdded)
                         refEntry.Type = asset.RootObject.GetType().Name;
                     refEntry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
@@ -1547,7 +1575,9 @@ namespace Frosty.Core
             {
                 using (NativeReader reader = new NativeReader(new FileStream(binName, FileMode.Open, FileAccess.Read)))
                 {
-                    refEntry.ModifiedEntry.DataObject = ModifiedResource.Read(reader.ReadToEnd());
+                    byte[] data = reader.ReadToEnd();
+                    refEntry.ModifiedEntry.DataObject = ModifiedResource.Read(data);
+                    refEntry.ModifiedEntry.Sha1 = Utils.GenerateSha1(data);
                 }
                 if (modifiedJson.CustomHandlerDependencies != null)
                     refEntry.ModifiedEntry.DependentAssets.AddRange(modifiedJson.CustomHandlerDependencies);
@@ -1803,6 +1833,7 @@ namespace Frosty.Core
                         {
                             EbxAsset asset = reader.ReadAsset<EbxAsset>();
                             entry.ModifiedEntry.DataObject = asset;
+                            entry.ModifiedEntry.Sha1 = Utils.GenerateSha1(entry.ModifiedEntry.Data);
                         }
 
                         if (ebx.HasValue("transient"))

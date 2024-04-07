@@ -120,6 +120,7 @@ namespace FrostySdk.Managers
         public EbxAssetEntry Blueprint;
         public BundleType Type;
         public bool Added;
+        public bool Imaginary;
     }
 
     public class AssetExtraData
@@ -138,7 +139,7 @@ namespace FrostySdk.Managers
         public virtual string Type { get; set; }
         public virtual string AssetType { get; }
 
-        public virtual string DisplayName => Filename + ((IsDirty) ? "*" : "");
+        public virtual string DisplayName => Filename + ((IsDirty) ? "*" : "") + ((IsImaginary) ? " [IMAGINARY]" : "");
         public virtual string Filename
         {
             get
@@ -176,6 +177,11 @@ namespace FrostySdk.Managers
         /// returns true if this asset was added
         /// </summary>
         public bool IsAdded { get; set; }
+
+        /// <summary>
+        /// returns true if this asset was added but does not contain any actual data (fake asset)
+        /// </summary>
+        public bool IsImaginary { get; set; }
 
         /// <summary>
         /// returns true if this asset or any asset linked to it is modified
@@ -1030,7 +1036,7 @@ namespace FrostySdk.Managers
 
             entry.ModifiedEntry.DataObject = asset;
             entry.ModifiedEntry.OriginalSize = 0;
-            entry.ModifiedEntry.Sha1 = Sha1.Zero;
+            entry.ModifiedEntry.Sha1 = GenerateSha1(buffer);
             entry.ModifiedEntry.IsInline = false;
             entry.ModifiedEntry.IsDirty = true;
             entry.IsDirty = true;
@@ -1088,7 +1094,7 @@ namespace FrostySdk.Managers
         /// </summary>
         public Guid AddChunk(byte[] buffer, Guid? overrideGuid = null, Texture texture = null, params int[] bundles)
         {
-            ChunkAssetEntry entry = new ChunkAssetEntry {IsAdded = true, IsDirty = true};
+            ChunkAssetEntry entry = new ChunkAssetEntry { IsAdded = true, IsDirty = true };
             CompressionType compressType = (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa18) ? CompressionType.Oodle : CompressionType.Default;
 
             entry.ModifiedEntry = new ModifiedAssetEntry
@@ -1123,6 +1129,134 @@ namespace FrostySdk.Managers
 
                 entry.Id = new Guid(guidBuf);
             }
+
+            chunkList.Add(entry.Id, entry);
+            return entry.Id;
+        }
+        #endregion
+
+        #region -- Add Imaginary Functions --
+        /// <summary>
+        /// Adds a new bundle to the manager
+        /// </summary>
+        public BundleEntry AddImaginaryBundle(string name, BundleType type, int sbIndex)
+        {
+            int bindex = bundles.FindIndex((BundleEntry be) => be.Name == name);
+            if (bindex != -1)
+                return bundles[bindex];
+
+            BundleEntry bentry = new BundleEntry
+            {
+                Name = name,
+                SuperBundleId = sbIndex,
+                Type = type,
+                Added = true,
+                Imaginary = true,
+            };
+            bundles.Add(bentry);
+
+            return bentry;
+        }
+
+        /// <summary>
+        /// Adds a new EBX to the manager
+        /// </summary>
+        public EbxAssetEntry AddImaginaryEbx(string name, Guid fileGuid, Sha1 dataSha1, string ebxType, params int[] bundles)
+        {
+            string keyName = name.ToLower();
+            if (ebxList.ContainsKey(keyName))
+                return ebxList[keyName];
+
+            EbxAssetEntry entry = new EbxAssetEntry
+            {
+                Name = name,
+                Guid = fileGuid,
+                Type = ebxType,
+                ModifiedEntry = new ModifiedAssetEntry()
+            };
+
+            //byte[] buffer = null;
+            //using (EbxWriter writer = new EbxWriter(new MemoryStream()))
+            //{
+            //    writer.WriteAsset(asset);
+            //    buffer = writer.ToByteArray();
+            //}
+
+            //entry.ModifiedEntry.DataObject = asset;
+            entry.ModifiedEntry.OriginalSize = 0;
+            entry.ModifiedEntry.Sha1 = dataSha1;
+            entry.ModifiedEntry.IsInline = false;
+            entry.ModifiedEntry.IsDirty = true;
+            entry.IsDirty = true;
+            entry.IsAdded = true;
+            entry.IsImaginary = true;
+            entry.AddedBundles.AddRange(bundles);
+
+            ebxList.Add(keyName, entry);
+            ebxGuidList.Add(entry.Guid, entry);
+
+            return entry;
+        }
+
+        /// <summary>
+        /// Adds a new resource to the manager
+        /// </summary>
+        public ResAssetEntry AddImaginaryRes(string name, ResourceType resType, long OrginalSize, Sha1 dataSha1, params int[] bundles)
+        {
+            name = name.ToLower();
+            if (resList.ContainsKey(name))
+                return resList[name];
+
+            ResAssetEntry entry = new ResAssetEntry
+            {
+                Name = name,
+                ResRid = Utils.GenerateResourceId(),
+                ResType = (uint)resType,
+                IsAdded = true,
+                IsImaginary = true,
+                IsDirty = true
+            };
+
+            while (resRidList.ContainsKey(entry.ResRid))
+                entry.ResRid = Utils.GenerateResourceId();
+
+            entry.ModifiedEntry = new ModifiedAssetEntry
+            {
+                //Data = Utils.CompressFile(buffer),
+                OriginalSize = OrginalSize,
+                IsInline = false,
+                ResMeta = entry.ResMeta
+            };
+
+            entry.ModifiedEntry.Sha1 = dataSha1;
+            entry.ModifiedEntry.IsDirty = true;
+            entry.AddedBundles.AddRange(bundles);
+
+            resList.Add(entry.Name, entry);
+            resRidList.Add(entry.ResRid, entry);
+
+            return entry;
+        }
+
+        /// <summary>
+        /// Adds a new chunk to the manager
+        /// </summary>
+        public Guid AddImaginaryChunk(uint LogicalSize, Sha1 chkSha1, Guid overrideGuid, params int[] bundles)
+        {
+            ChunkAssetEntry entry = new ChunkAssetEntry { IsAdded = true, IsDirty = true };
+            CompressionType compressType = (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa18) ? CompressionType.Oodle : CompressionType.Default;
+
+            entry.ModifiedEntry = new ModifiedAssetEntry
+            {
+                //Data = (texture != null) ? Utils.CompressTexture(buffer, texture, compressType) : Utils.CompressFile(buffer, compressionOverride: compressType),
+                LogicalSize = LogicalSize,
+                FirstMip = -1
+            };
+            entry.ModifiedEntry.Sha1 = chkSha1;
+
+            entry.AddedBundles.AddRange(bundles);
+
+            entry.Id = overrideGuid;
 
             chunkList.Add(entry.Id, entry);
             return entry.Id;
@@ -1280,7 +1414,13 @@ namespace FrostySdk.Managers
             object modifiedResource = asset.SaveModifiedResource();
             entry.ModifiedEntry.DataObject = modifiedResource ?? asset;
             entry.ModifiedEntry.OriginalSize = 0;
-            entry.ModifiedEntry.Sha1 = Sha1.Zero;
+            byte[] buf = null;
+            using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateProjectWriter(new MemoryStream(), EbxWriteFlags.IncludeTransient))
+            {
+                ebxWriter.WriteAsset(asset);
+                buf = ebxWriter.ToByteArray();
+                entry.ModifiedEntry.Sha1 = GenerateSha1(buf);
+            }
             entry.ModifiedEntry.IsTransientModified = asset.TransientEdit;
             entry.ModifiedEntry.DependentAssets.Clear();
             entry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);

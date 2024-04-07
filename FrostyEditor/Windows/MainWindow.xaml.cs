@@ -1064,6 +1064,12 @@ namespace FrostyEditor
             if (asset.Type == "EncryptedAsset")
                 return;
 
+            if (asset.IsImaginary)
+            {
+                App.Logger.LogError("Cannot open asset which does not contain any data.");
+                return;
+            }
+
             foreach (FrostyTabItem currentTi in tabControl.Items)
             {
                 if (currentTi.TabId == asset.Name)
