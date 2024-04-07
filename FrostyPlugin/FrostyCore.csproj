@@ -119,6 +119,7 @@
     <Compile Include="Attributes\PluginVersionAttribute.cs" />
     <Compile Include="Attributes\RegisterAssetDefinitionAttribute.cs" />
     <Compile Include="Attributes\RegisterCustomAssetManagerAttribute.cs" />
+    <Compile Include="Attributes\RegisterExportActionAttribute.cs" />
     <Compile Include="Attributes\RegisterExecutionAction.cs" />
     <Compile Include="Attributes\RegisterCustomHandlerAttribute.cs" />
     <Compile Include="Attributes\RegisterDataExplorerContextMenuAttribute.cs" />
@@ -145,6 +146,7 @@
     <Compile Include="FrostyConfiguration.cs" />
     <Compile Include="FrostyLogger.cs" />
     <Compile Include="FrostyTaskLogger.cs" />
+    <Compile Include="Mod\ExportActionOverride.cs" />
     <Compile Include="Mod\FrostyModCollection.cs" />
     <Compile Include="Mod\FrostyModRequirement.cs" />
     <Compile Include="Extensions\TabExtension.cs" />

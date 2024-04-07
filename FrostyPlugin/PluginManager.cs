@@ -58,6 +58,8 @@ namespace Frosty.Core
         private Dictionary<(string, int), Type> m_childTypeOverridesPriority = new Dictionary<(string, int), Type>();
         private Dictionary<string, Type> m_subTypeOverrides = new Dictionary<string, Type>();
 
+        private List<(float, ExportType, Type)> m_exportActionOverrides = new List<(float, ExportType, Type)>();
+
         private List<string> m_userShaders = new List<string>();
 
         private Dictionary<string, PrIdExtension> m_pridOverrides = new Dictionary<string, PrIdExtension>();
@@ -219,6 +221,11 @@ namespace Frosty.Core
                 }
             }
             return null;
+        }
+
+        public List<(float, ExportType, ExportActionOverride)> GetExportActionOverrides()
+        {
+            return m_exportActionOverrides.Select(overrides => (overrides.Item1, overrides.Item2, (ExportActionOverride)Activator.CreateInstance(overrides.Item3))).ToList();
         }
 
         public string GetPointerRefIdOverride(dynamic objData, int maxLength = -1)
@@ -481,6 +488,11 @@ namespace Frosty.Core
                     else if (tmpAttr is RegisterPointerRefIdOverrideAttribute attr5)
                     {
                         m_pridOverrides.Add(attr5.LookupName.ToLower(), (PrIdExtension)Activator.CreateInstance(attr5.PrIdType));
+                    }
+                    else if (tmpAttr is RegisterExportActionAttribute attr6)
+                    {
+                        m_exportActionOverrides.Add((attr6.Priority, attr6.ExportType, attr6.LaunchClass));
+                        m_exportActionOverrides = m_exportActionOverrides.OrderByDescending(item => item.Item1).ToList();
                     }
                 }
                 else if (loadType == PluginLoadType.Initialize)
