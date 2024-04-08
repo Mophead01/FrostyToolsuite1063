@@ -146,6 +146,7 @@
     <Compile Include="FrostyConfiguration.cs" />
     <Compile Include="FrostyLogger.cs" />
     <Compile Include="FrostyTaskLogger.cs" />
+    <Compile Include="KyberIntegration.cs" />
     <Compile Include="Mod\ExportActionOverride.cs" />
     <Compile Include="Mod\FrostyModCollection.cs" />
     <Compile Include="Mod\FrostyModRequirement.cs" />

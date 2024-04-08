@@ -38,7 +38,7 @@ namespace DuplicationPlugin
 
                 EbxAsset refAsset = App.AssetManager.GetEbx(refEntry);
                 dynamic refRoot = refAsset.RootObject;
-
+                
                 foreach (dynamic chkref in refRoot.Chunks)
                 {
                     ChunkAssetEntry soundChunk = App.AssetManager.GetChunkEntry(chkref.ChunkId);
@@ -120,6 +120,38 @@ namespace DuplicationPlugin
 
                 newBundle.Blueprint = newEntry;
                 newEntry.LinkAsset(entry);
+
+                if (TypeLibrary.IsSubClassOf(entry.Type, "LevelData"))
+                {
+                    EbxAssetEntry descCopyEntry = App.AssetManager.GetEbxEntry($"{entry.Name.ToLower()}/description");
+                    if (descCopyEntry == null)
+                    {
+                        App.Logger.LogError($"Cannot find description asset to dupe for {entry.Name}");
+                        return newEntry;
+                    }
+                    string descNewName = $"{newName.ToLower()}/description";
+                    EbxAssetEntry descNewEntry = base.DuplicateAsset(descCopyEntry, descNewName, false, null);
+                    EbxAsset descNewAsset = App.AssetManager.GetEbx(descNewEntry);
+                    dynamic descNewRoot = descNewAsset.RootObject;
+
+                    EbxAsset newAsset = App.AssetManager.GetEbx(newEntry);
+                    descNewRoot.LevelGuid = newAsset.RootInstanceGuid;
+
+                    descNewRoot.LevelName = new CString(newName);
+                    foreach(dynamic bunInfo in descNewRoot.Bundles)
+                    {
+                        if (bunInfo.Name.ToString() == entry.Name)
+                            bunInfo.Name = new CString(newName);
+                    }
+
+                    EbxAssetEntry levelEntry = App.AssetManager.GetEbxEntry("LevelListReport");
+                    EbxAsset levelAsset = App.AssetManager.GetEbx(levelEntry);
+                    dynamic levelRoot = levelAsset.RootObject;
+
+                    levelRoot.BuiltLevels.Add(descNewEntry.Guid);
+                    App.AssetManager.ModifyEbx(levelEntry.Name, levelAsset);
+                    App.AssetManager.ModifyEbx(descNewEntry.Name, descNewAsset);
+                }
 
                 return newEntry;
             }
@@ -543,7 +575,11 @@ namespace DuplicationPlugin
                 dynamic obj = newAsset.RootObject;
                 obj.Name = newName;
 
-                AssetClassGuid guid = new AssetClassGuid(Utils.GenerateDeterministicGuid(newAsset.Objects, (Type)obj.GetType(), newAsset.FileGuid), -1);
+                AssetClassGuid guid;
+                if (asset.RootInstanceGuid == entry.Guid && !createNew)
+                    guid = new AssetClassGuid(newAsset.FileGuid, -1);
+                else
+                    guid = new AssetClassGuid(Utils.GenerateDeterministicGuid(newAsset.Objects, (Type)obj.GetType(), newAsset.FileGuid), -1);
                 obj.SetInstanceGuid(guid);
 
                 EbxAssetEntry newEntry = App.AssetManager.AddEbx(newName, newAsset);
@@ -643,6 +679,25 @@ namespace DuplicationPlugin
 
                 string newName = win.SelectedPath + "/" + win.SelectedName;
                 newName = newName.Trim('/');
+
+                string sourceName = entry.Name;
+                if (sourceName.ToLower() == sourceName)
+                    newName = newName.ToLower();
+                else
+                {
+                    List<string> sourceNameSplit = sourceName.Split('/').ToList();
+                    List<string> newNameSplit = newName.Split('/').ToList();
+                    string newNameConstructor = "";
+                    for (int i = 0; i < sourceNameSplit.Count(); i++)
+                    {
+                        if (sourceNameSplit[i].ToLower() == newNameSplit[i].ToLower())
+                            newNameConstructor += $"{sourceNameSplit[i]}/";
+                        else
+                            break;
+                    }
+                    newNameConstructor += newName.Substring(newNameConstructor.Length);
+                    newName = newNameConstructor;
+                }
 
                 Type newType = win.SelectedType;
                 if (win.IsToBeRenamed == false)
