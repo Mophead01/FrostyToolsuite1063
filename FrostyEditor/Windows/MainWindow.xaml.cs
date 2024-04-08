@@ -679,7 +679,7 @@ namespace FrostyEditor
                 if (KyberSettings.AutoplayerType == "Dummy Bots")
                 {
                     commands.Add($"Whiteshark.AutoBalanceTeamsOnNeutral 1");
-                    commands.Add($"AutoPlayers.ForcedServerAutoPlayerCount {KyberSettings.Team1Bots + KyberSettings.Team2Bots}");
+                    commands.Add($"AutoPlayers.PlayerCount {KyberSettings.Team1Bots + KyberSettings.Team2Bots + 1}");
                 }
                 else if (KyberSettings.AutoplayerType == "Gamemode Tied")
                 {
@@ -706,8 +706,8 @@ namespace FrostyEditor
                 string cliCommand = $"start_server --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
                 psi.Arguments = cliCommand;
-                psi.RedirectStandardInput = true;
-                psi.RedirectStandardOutput = true;
+                //psi.RedirectStandardInput = true;
+                //psi.RedirectStandardOutput = true;
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = false; // Show cmd window
                 psi.WorkingDirectory = Path.GetDirectoryName(KyberSettings.CliDirectory); // Set the working directory here
