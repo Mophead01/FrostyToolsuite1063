@@ -139,7 +139,7 @@ namespace FrostySdk.Managers
         public virtual string Type { get; set; }
         public virtual string AssetType { get; }
 
-        public virtual string DisplayName => Filename + ((IsDirty) ? "*" : "") + ((IsImaginary) ? " [IMAGINARY]" : "");
+        public virtual string DisplayName => Filename + ((IsDirty) ? "*" : "") + (IsTotallyImaginary ? "[TOTALLY IMAGINARY]" : ((IsImaginary) ? " [IMAGINARY]" : ""));
         public virtual string Filename
         {
             get
@@ -182,6 +182,11 @@ namespace FrostySdk.Managers
         /// returns true if this asset was added but does not contain any actual data (fake asset)
         /// </summary>
         public bool IsImaginary { get; set; }
+
+        /// <summary>
+        /// returns true if this asset is "Totally Imaginary", which means we know it's Name and bundles but not anything about its data such as the asset ype
+        /// </summary>
+        public virtual bool IsTotallyImaginary { get { return IsImaginary && Type == null; } }
 
         /// <summary>
         /// returns true if this asset or any asset linked to it is modified
@@ -388,13 +393,15 @@ namespace FrostySdk.Managers
         public override string AssetType => "res";
 
         //#if FROSTY_DEVELOPER
-//        // @tmp
-//        public override string DisplayName => ("(" + (OriginalSize / 1024.0d).ToString("F2") + "kb) ".PadRight(6) + Filename) + ((IsDirty) ? "*" : "");
-//#endif
+        //        // @tmp
+        //        public override string DisplayName => ("(" + (OriginalSize / 1024.0d).ToString("F2") + "kb) ".PadRight(6) + Filename) + ((IsDirty) ? "*" : "");
+        //#endif
 
         public ulong ResRid;
         public uint ResType;
         public byte[] ResMeta;
+
+        public override bool IsTotallyImaginary { get { return IsImaginary && ((ResourceType)ResType) == ResourceType.Invalid; } }
     }
 
     public class ChunkAssetEntry : AssetEntry
@@ -1201,7 +1208,7 @@ namespace FrostySdk.Managers
         /// <summary>
         /// Adds a new resource to the manager
         /// </summary>
-        public ResAssetEntry AddImaginaryRes(string name, ResourceType resType, long OrginalSize, Sha1 dataSha1, params int[] bundles)
+        public ResAssetEntry AddImaginaryRes(string name, ulong resRid, ResourceType resType, Sha1 dataSha1, params int[] bundles)
         {
             name = name.ToLower();
             if (resList.ContainsKey(name))
@@ -1210,20 +1217,19 @@ namespace FrostySdk.Managers
             ResAssetEntry entry = new ResAssetEntry
             {
                 Name = name,
-                ResRid = Utils.GenerateResourceId(),
+                ResRid = resRid,
                 ResType = (uint)resType,
                 IsAdded = true,
                 IsImaginary = true,
                 IsDirty = true
             };
 
-            while (resRidList.ContainsKey(entry.ResRid))
-                entry.ResRid = Utils.GenerateResourceId();
+            //while (resRidList.ContainsKey(entry.ResRid))
+            //    entry.ResRid = Utils.GenerateResourceId();
 
             entry.ModifiedEntry = new ModifiedAssetEntry
             {
                 //Data = Utils.CompressFile(buffer),
-                OriginalSize = OrginalSize,
                 IsInline = false,
                 ResMeta = entry.ResMeta
             };
@@ -1233,15 +1239,27 @@ namespace FrostySdk.Managers
             entry.AddedBundles.AddRange(bundles);
 
             resList.Add(entry.Name, entry);
-            resRidList.Add(entry.ResRid, entry);
+            if (resRid != 0)
+                resRidList.Add(entry.ResRid, entry);
 
             return entry;
         }
 
         /// <summary>
+        /// Changes an imaginary resource ID (since they may not initially be set)
+        /// </summary>
+        public void UpdateImaginaryResRid(ResAssetEntry resEntry, ulong resRid)
+        {
+            if (!resEntry.IsImaginary)
+                return;
+            resEntry.ResRid = resRid;
+            resRidList.Add(resEntry.ResRid, resEntry);
+        }
+
+        /// <summary>
         /// Adds a new chunk to the manager
         /// </summary>
-        public Guid AddImaginaryChunk(uint LogicalSize, Sha1 chkSha1, Guid overrideGuid, params int[] bundles)
+        public Guid AddImaginaryChunk(Guid overrideGuid, int H32, int FirstMip, params int[] bundles)
         {
             ChunkAssetEntry entry = new ChunkAssetEntry { IsAdded = true, IsDirty = true };
             CompressionType compressType = (ProfilesLibrary.DataVersion == (int)ProfileVersion.Fifa18) ? CompressionType.Oodle : CompressionType.Default;
@@ -1249,10 +1267,9 @@ namespace FrostySdk.Managers
             entry.ModifiedEntry = new ModifiedAssetEntry
             {
                 //Data = (texture != null) ? Utils.CompressTexture(buffer, texture, compressType) : Utils.CompressFile(buffer, compressionOverride: compressType),
-                LogicalSize = LogicalSize,
-                FirstMip = -1
+                FirstMip = FirstMip,
+                H32 = H32,
             };
-            entry.ModifiedEntry.Sha1 = chkSha1;
 
             entry.AddedBundles.AddRange(bundles);
 
