@@ -111,7 +111,7 @@ namespace Frosty.Core.IO
                 byte[] data = null;
 
                 name = entry.Name.ToLower();
-                if (entry.HasModifiedData)
+                if (entry.HasModifiedData && !entry.IsImaginary)
                 {
                     userData = entry.ModifiedEntry.UserData;
                     using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateWriter(new MemoryStream()))
@@ -140,7 +140,7 @@ namespace Frosty.Core.IO
                 : base(entry)
             {
                 name = entry.Name.ToLower();
-                if (entry.HasModifiedData)
+                if (entry.HasModifiedData && !entry.IsImaginary)
                 {
                     sha1 = entry.ModifiedEntry.Sha1;
                     resourceIndex = manifest.Add(entry.ModifiedEntry.Sha1, entry.ModifiedEntry.Data);
@@ -182,7 +182,7 @@ namespace Frosty.Core.IO
                 : base(entry)
             {
                 name = entry.Id.ToString();
-                if (entry.HasModifiedData)
+                if (entry.HasModifiedData && !entry.IsImaginary)
                 {
                     sha1 = entry.ModifiedEntry.Sha1;
                     resourceIndex = manifest.Add(entry.ModifiedEntry.Sha1, entry.ModifiedEntry.Data);
@@ -327,7 +327,7 @@ namespace Frosty.Core.IO
                             continue;
                     }
 
-                    if (entry.HasModifiedData)
+                    if (entry.HasModifiedData && !entry.IsImaginary)
                     {
                         ICustomActionHandler actionHandler = App.PluginManager.GetCustomHandler(entry.Type);
                         if (actionHandler != null && (!entry.IsAdded || actionHandler.ModifiesAddedAssets == true))
@@ -355,7 +355,7 @@ namespace Frosty.Core.IO
             {
                 if (entry.IsDirectlyModified)
                 {
-                    if (entry.HasModifiedData)
+                    if (entry.HasModifiedData && !entry.IsImaginary)
                     {
                         ICustomActionHandler actionHandler = App.PluginManager.GetCustomHandler((ResourceType)entry.ResType);
                         if (actionHandler != null && !entry.IsAdded)

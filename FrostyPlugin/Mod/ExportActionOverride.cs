@@ -1,4 +1,6 @@
-﻿using FrostySdk.Managers;
+﻿using Frosty.Core.Attributes;
+using Frosty.Core.Windows;
+using FrostySdk.Managers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +11,10 @@ namespace Frosty.Core.Mod
 {
     public class ExportActionOverride
     {
-        public virtual void PreExport(AssetManager AM, string fbmodName, List<string> loadOrder)
+        public virtual void PreExport(FrostyTaskWindow task, ExportType exportType, string fbmodName, List<string> loadOrder)
         {
         }
-        public virtual void PostExport(AssetManager AM, string fbmodName, List<string> loadOrder)
+        public virtual void PostExport(FrostyTaskWindow task, ExportType exportType, string fbmodName, List<string> loadOrder)
         {
         }
     }

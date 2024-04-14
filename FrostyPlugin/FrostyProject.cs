@@ -175,6 +175,8 @@ namespace Frosty.Core
                     int count = 0;
                     foreach (BundleEntry entry in App.AssetManager.EnumerateBundles(modifiedOnly: true))
                     {
+                        if (entry.Imaginary)
+                            continue;
                         if (entry.Added)
                         {
                             writer.WriteNullTerminatedString(entry.Name);
@@ -195,6 +197,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (EbxAssetEntry entry in App.AssetManager.EnumerateEbx(modifiedOnly: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         if (entry.IsAdded)
                         {
                             writer.WriteNullTerminatedString(entry.Name);
@@ -214,6 +218,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (ResAssetEntry entry in App.AssetManager.EnumerateRes(modifiedOnly: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         if (entry.IsAdded)
                         {
                             writer.WriteNullTerminatedString(entry.Name);
@@ -235,6 +241,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (ChunkAssetEntry entry in App.AssetManager.EnumerateChunks(modifiedOnly: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         if (entry.IsAdded)
                         {
                             writer.Write(entry.Id);
@@ -258,6 +266,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (EbxAssetEntry entry in App.AssetManager.EnumerateEbx(modifiedOnly: true, includeLinked: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         writer.WriteNullTerminatedString(entry.Name);
                         SaveLinkedAssets(entry, writer);
 
@@ -320,6 +330,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (ResAssetEntry entry in App.AssetManager.EnumerateRes(modifiedOnly: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         writer.WriteNullTerminatedString(entry.Name);
                         SaveLinkedAssets(entry, writer);
 
@@ -376,6 +388,8 @@ namespace Frosty.Core
                     count = 0;
                     foreach (ChunkAssetEntry entry in App.AssetManager.EnumerateChunks(modifiedOnly: true))
                     {
+                        if (entry.IsImaginary)
+                            continue;
                         writer.Write(entry.Id);
 
                         // bundles the asset has been added to
@@ -561,7 +575,7 @@ namespace Frosty.Core
 
                 foreach (BundleEntry bEntry in App.AssetManager.EnumerateBundles(modifiedOnly: true))
                 {
-                    if (!bEntry.Added)
+                    if (bEntry.Imaginary || !bEntry.Added)
                         continue;
 
                     FileInfo bundleJson = new FileInfo(string.Format("{0}{1}.json", bundlesFolder, bEntry.Name));
@@ -573,6 +587,8 @@ namespace Frosty.Core
 
                 Parallel.ForEach(App.AssetManager.EnumerateEbx(modifiedOnly: true, includeLinked: true), refEntry =>
                 {
+                    if (refEntry.IsImaginary)
+                        return;
                     string intendedFileName = string.Format("{0}{1}.json", ebxFolder, refEntry.Name);
                     if (intendedFileName.Count() >= 260 || intendedFileName.LastIndexOf("//") >= 248)
                     {
@@ -621,6 +637,8 @@ namespace Frosty.Core
 
                 foreach (ResAssetEntry resEntry in App.AssetManager.EnumerateRes(modifiedOnly: true))
                 {
+                    if (resEntry.IsImaginary)
+                        return;
                     FileInfo resFileInfo = new FileInfo(string.Format("{0}{1}.json", resFolder, resEntry.Name));
                     if (!resFileInfo.Directory.Exists)
                         Directory.CreateDirectory(resFileInfo.DirectoryName);
@@ -652,6 +670,8 @@ namespace Frosty.Core
 
                 foreach (ChunkAssetEntry chkEntry in App.AssetManager.EnumerateChunks(modifiedOnly: true))
                 {
+                    if (chkEntry.IsImaginary)
+                        return;
                     FileInfo chkFileInfo = new FileInfo(string.Format("{0}{1}.json", chkFolder, chkEntry.Name));
                     if (!chkFileInfo.Directory.Exists)
                         Directory.CreateDirectory(chkFileInfo.DirectoryName);
@@ -1549,26 +1569,6 @@ namespace Frosty.Core
                         refEntry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
                     }
 
-                }
-                using (EbxReader ebxReader = EbxReader.CreateProjectReader(new FileStream(binName, FileMode.Open, FileAccess.Read)))
-                {
-                    EbxAsset asset = ebxReader.ReadAsset<EbxAsset>();
-                    if (refEntry.IsAdded)
-                    {
-                        if (((dynamic)asset.RootObject).Name != refEntry.Name)
-                        {
-                            ((dynamic)asset.RootObject).Name = refEntry.Name;
-                            refEntry.IsDirty = true;
-                            refEntry.ModifiedEntry.IsDirty = true;
-                        }
-                    }
-                    refEntry.ModifiedEntry.DataObject = asset;
-
-                    refEntry.ModifiedEntry.Sha1 = Utils.GenerateSha1(refEntry.ModifiedEntry.Data);
-
-                    if (refEntry.IsAdded)
-                        refEntry.Type = asset.RootObject.GetType().Name;
-                    refEntry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
                 }
             }
             else

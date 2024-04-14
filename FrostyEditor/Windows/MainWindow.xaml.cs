@@ -535,8 +535,11 @@ namespace FrostyEditor
 
             string editorModPath = $"Mods/Kyber/{editorModName}";
             List<string> loadOrderModPaths = fbmodNames.Select(modName => $"Mods/Kyber/{modName}").ToList();
-            foreach (ExportActionOverride exportAction in actions)
-                exportAction.PreExport(App.AssetManager, editorModPath, loadOrderModPaths);
+            FrostyTaskWindow.Show("Preparing", "", (task) =>
+            {
+                foreach (ExportActionOverride exportAction in actions)
+                    exportAction.PreExport(task, ExportType.KyberLaunchOnly, editorModPath, loadOrderModPaths);
+            });
 
 
 
@@ -638,8 +641,12 @@ namespace FrostyEditor
                 //}
             }
 
-            foreach (ExportActionOverride exportAction in actions)
-                exportAction.PostExport(App.AssetManager, editorModPath, loadOrderModPaths);
+
+            FrostyTaskWindow.Show("Completing", "", (task) =>
+            {
+                foreach (ExportActionOverride exportAction in actions)
+                    exportAction.PostExport(task, ExportType.KyberLaunchOnly, editorModPath, loadOrderModPaths);
+            });
 
             GC.Collect();
         }

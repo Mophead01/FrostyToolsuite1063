@@ -487,6 +487,11 @@ namespace Frosty.Core.Controls.Editors
             EbxAssetEntry selectedAsset = App.SelectedAsset;
             if (selectedAsset == null)
                 return;
+            if (selectedAsset.IsImaginary)
+            {
+                App.Logger.LogError("Cannot reference Imaginary Assets");
+                return;
+            }
 
             // selected asset is the same as the editing one
             EbxAssetEntry currentAsset = GetParentEditor().AssetEntry as EbxAssetEntry;
