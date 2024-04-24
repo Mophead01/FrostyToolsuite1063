@@ -21,6 +21,7 @@ namespace Frosty.Core
         public static int Team2Bots { get { return Config.Get("Kyber_Team2Bots", 20, ConfigScope.Global); } set { Config.Add("Kyber_Team2Bots", value, ConfigScope.Global); } }
         public static string SelectedLoadOrder { get { return Config.Get("Kyber_SelectedLoadOrder", "No Order", ConfigScope.Global); } set { Config.Add("Kyber_SelectedLoadOrder", value, ConfigScope.Global); } }
         public static bool Autostart { get { return Config.Get("Kyber_AutoStart", false, ConfigScope.Global); } set { Config.Add("Kyber_AutoStart", value, ConfigScope.Global); } }
+        public static bool DebugMode { get { return Config.Get("Kyber_DebugMode", false, ConfigScope.Global); } set { Config.Add("Kyber_DebugMode", value, ConfigScope.Global); } }
         public static List<string> LaunchCommands {
             get {
                 string strList = Config.Get<string>("Kyber_LaunchCommands", null, ConfigScope.Global);

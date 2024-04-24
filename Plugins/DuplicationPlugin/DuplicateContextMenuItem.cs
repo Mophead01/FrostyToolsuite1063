@@ -105,6 +105,30 @@ namespace DuplicationPlugin
         public class SubWorldDataExtension : DuplicateAssetExtension
         {
             public override string AssetType => "SubWorldData";
+            public static Dictionary<string, List<string>> ForcedBundleTransfers
+            {
+                get
+                {
+                    string strList = Config.Get<string>("ForcedBundleTransfers", null, ConfigScope.Game);
+                    Dictionary<string, List<string>> returnList = new Dictionary<string, List<string>>();
+                    if (strList == null)
+                        return returnList;
+                    foreach (string subStr in strList.Split('$'))
+                    {
+                        if (subStr.Split(':').Count() < 2)
+                            continue;
+                        string assetName = subStr.Split(':')[0];
+                        returnList.Add(assetName, new List<string>());
+                        foreach (string subStr2 in subStr.Split(':')[1].Split('£'))
+                            returnList[assetName].Add(subStr2);
+                    }
+                    return returnList;
+                }
+                set
+                {
+                    Config.Add("ForcedBundleTransfers", string.Join("$", value.ToList().Select(pair => $"{pair.Key}:{string.Join("£", pair.Value)}")), ConfigScope.Game);
+                }
+            }
 
             public override EbxAssetEntry DuplicateAsset(EbxAssetEntry entry, string newName, bool createNew, Type newType)
             {
@@ -114,6 +138,11 @@ namespace DuplicationPlugin
                 // Add new bundle
                 BundleEntry oldBundle = App.AssetManager.GetBundleEntry(newEntry.AddedBundles[0]);
                 BundleEntry newBundle = App.AssetManager.AddBundle("win32/" + (ProfilesLibrary.DataVersion == (int)ProfileVersion.StarWarsBattlefrontII ? newName : newName.ToLower()), BundleType.SubLevel, oldBundle.SuperBundleId);
+                if (!ForcedBundleTransfers.ContainsKey(newBundle.Name))
+                {
+                    ForcedBundleTransfers = new Dictionary<string, List<string>>(ForcedBundleTransfers) { { newBundle.Name, new List<string>() { oldBundle.Name } } };
+                    Config.Save();
+                }
 
                 newEntry.AddedBundles.Clear();
                 newEntry.AddedBundles.Add(App.AssetManager.GetBundleId(newBundle));
