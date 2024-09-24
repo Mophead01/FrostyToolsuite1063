@@ -1128,7 +1128,10 @@ namespace Frosty.Core.Controls
 
                     foreach (FrostyPropertyGridItemData childItem in ProcessClass(tmpValue, tmpDefValue, this))
                     {
-                        _children.Add(childItem);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            _children.Add(childItem);
+                        });
                         if (_valueConverter != null)
                         {
                             childItem.PropertyChanged += (o, e) =>
@@ -1157,7 +1160,10 @@ namespace Frosty.Core.Controls
 
                         FrostyPropertyGridItemData listItem = new FrostyPropertyGridItemData("[" + i + "]", "[" + i + "]", listValue, listDefValue, this, _flags) {Binding = new ArrayItemValueBinding(list, i)};
                         listItem.Attributes.AddRange(Attributes);
-                        _children.Add(listItem);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            _children.Add(listItem);
+                        });
                     }
                 }
                 else if (tmpValue is PointerRef pr)
@@ -1167,7 +1173,12 @@ namespace Frosty.Core.Controls
                         object defValue = (pr.Internal != null) ? Activator.CreateInstance(pr.Internal.GetType()) : null;
 
                         foreach (FrostyPropertyGridItemData childItem in ProcessClass(pr.Internal, defValue, this))
-                            _children.Add(childItem);
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                _children.Add(childItem);
+                            });
+                        }
                     }
                 }
             }

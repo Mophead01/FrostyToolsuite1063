@@ -313,7 +313,7 @@ namespace ConnectionPlugin.Editors
             else
                 return ("", "(null)", "", "");
 
-            Type = resolvedPr.GetType().Name;
+            Type = resolvedPr != null ? resolvedPr.GetType().Name : "N/A BAD PR";
 
             string ExtraInfo = App.PluginManager.GetPointerRefIdOverride(resolvedPr, 35);
 

@@ -960,7 +960,10 @@ namespace FrostySdk.Managers
         public void AddChunk(ChunkAssetEntry entry)
         {
             entry.IsAdded = true;
-            chunkList.Add(entry.Id, entry);
+            if (!chunkList.ContainsKey(entry.Id))
+                chunkList.Add(entry.Id, entry);
+            else
+                chunkList[entry.Id] = entry;
         }
         public void AddRes(ResAssetEntry entry)
         {

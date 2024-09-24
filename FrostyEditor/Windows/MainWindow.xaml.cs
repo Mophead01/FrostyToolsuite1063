@@ -549,6 +549,7 @@ namespace FrostyEditor
             //
             // Export Kyber mod
             //
+            Random random = new Random();
             bool cancelled = false;
             try
             {
@@ -616,8 +617,9 @@ namespace FrostyEditor
                 //
                 //  Execute kyber_cli.exe
                 //
-
-                string cliCommand = $"start_server --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
+                int randomNumber = random.Next();
+                string cliCommand = $"start_server --verbose --server-password \"Mophead{randomNumber}\" --debug --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
+                App.Logger.Log(cliCommand);
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
                 if (KyberSettings.DebugMode)
                     psi.EnvironmentVariables["KYBER_LOG_LEVEL"] = "debug";

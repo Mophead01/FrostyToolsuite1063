@@ -330,10 +330,11 @@ namespace Frosty.Core.IO
                     if (entry.HasModifiedData && !entry.IsImaginary)
                     {
                         ICustomActionHandler actionHandler = App.PluginManager.GetCustomHandler(entry.Type);
-                        if (actionHandler != null && (!entry.IsAdded || actionHandler.ModifiesAddedAssets == true))
+                        if (actionHandler != null && !entry.IsAdded)  //if (actionHandler != null && (!entry.IsAdded || actionHandler.ModifiesAddedAssets == true))
                         {
                             // use custom action handler to save asset to mod
                             actionHandler.SaveToMod(this, entry);
+                            App.Logger.Log("Handler Saved: " + entry.Name);
                         }
                         else
                         {

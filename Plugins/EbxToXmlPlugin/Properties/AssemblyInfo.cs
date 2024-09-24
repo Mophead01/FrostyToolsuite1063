@@ -34,4 +34,5 @@ using System.Windows;
 [assembly: RegisterMenuExtension(typeof(BulkExporting.SchematicChannelMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.StatEventToCSVMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ObjectTypeMenuExtension))]
+[assembly: RegisterMenuExtension(typeof(BulkExporting.ClassPortsMenuExtension))]
 

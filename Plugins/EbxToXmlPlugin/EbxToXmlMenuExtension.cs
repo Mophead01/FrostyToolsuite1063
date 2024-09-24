@@ -803,5 +803,187 @@ namespace EbxToXmlPlugin
                 }
             });
         }
+        public class ClassPortsMenuExtension : MenuExtension
+        {
+            internal static ImageSource imageSource = pluginimageSource;
+
+            public override string TopLevelMenuName => TopLevel;
+            public override string SubLevelMenuName => SubLevel;
+
+            public override string MenuItemName => "Class Ports Csv";
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Properties.png") as ImageSource;
+
+            private class PortData
+            {
+                public string PortName;
+                public int Occurences;
+                public int UniqueClassOccurences;
+            }
+
+            private class ClassPortsData
+            {
+                public string TypeName;
+                public int Occurences;
+                public int EbxOccurences;
+                public Dictionary<string, PortData> SourceProperties = new Dictionary<string, PortData>();
+                public Dictionary<string, PortData> TargetProperties = new Dictionary<string, PortData>();
+                public Dictionary<string, PortData> SourceLinks = new Dictionary<string, PortData>();
+                public Dictionary<string, PortData> TargetLinks = new Dictionary<string, PortData>();
+                public Dictionary<string, PortData> SourceEvents = new Dictionary<string, PortData>();
+                public Dictionary<string, PortData> TargetEvents = new Dictionary<string, PortData>();
+            }
+
+            Dictionary<string, ClassPortsData> knownClasses = new Dictionary<string, ClassPortsData>();
+
+            Dictionary<Guid, Dictionary<Guid, string>> ebxExportedTypesDict = new Dictionary<Guid, Dictionary<Guid, string>>();
+            public static bool HasProperty(object obj, string propertyName)
+            {
+                return obj.GetType().GetProperty(propertyName) != null;
+            }
+
+            private Dictionary<Guid, string> GetExportedTypes(Guid fileGuid)
+            {
+                if (ebxExportedTypesDict.ContainsKey(fileGuid))
+                    return ebxExportedTypesDict[fileGuid];
+
+                EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(fileGuid);
+                EbxAsset refAsset = App.AssetManager.GetEbx(App.AssetManager.GetEbxEntry(fileGuid));
+
+                ebxExportedTypesDict.Add(fileGuid, refAsset.ExportedObjects.ToDictionary(obj => ((Guid)((dynamic)obj).__InstanceGuid.ExportedGuid), obj => obj.GetType().Name));
+
+                if (TypeLibrary.IsSubClassOf(refEntry.Type, "Blueprint"))
+                {
+                    dynamic refRoot = refAsset.RootObject;
+                    Dictionary<PointerRef, ClassPortsData> refPorts = new Dictionary<PointerRef, ClassPortsData>();
+                    ClassPortsData GetPortsData(PointerRef pr)
+                    {
+                        if (!refPorts.ContainsKey(pr))
+                        {
+                            if (pr.Type == PointerRefType.Internal)
+                                refPorts.Add(pr, new ClassPortsData() { TypeName = pr.Internal.GetType().Name, Occurences = 1, EbxOccurences = 1 });
+                            else if (pr.Type == PointerRefType.External)
+                                refPorts.Add(pr, new ClassPortsData() { TypeName = GetExportedTypes(pr.External.FileGuid)[pr.External.ClassGuid], Occurences = 1, EbxOccurences = 1 });
+                            else
+                                refPorts.Add(pr, new ClassPortsData() { TypeName = "null", Occurences = 1, EbxOccurences = 1 });
+                        }
+                            
+                        return refPorts[pr];
+
+                    }
+                    void TryAdd(Dictionary<string, PortData> portDict, string portName, int occurences = 1, bool addUniqueClassOccurences = false)
+                    {
+                        if (portDict.ContainsKey(portName))
+                        {
+                            portDict[portName].Occurences += occurences;
+                            if (addUniqueClassOccurences)
+                                portDict[portName].UniqueClassOccurences++;
+                        }
+                        else
+                            portDict.Add(portName, new PortData() { PortName = portName, Occurences = occurences, UniqueClassOccurences = 1 });
+                    }
+                    foreach(dynamic propCon in  refRoot.PropertyConnections)
+                    {
+                        TryAdd(GetPortsData(propCon.Source).SourceProperties, propCon.SourceField);
+                        TryAdd(GetPortsData(propCon.Target).TargetProperties, propCon.TargetField);
+                    }
+                    foreach (dynamic propCon in refRoot.LinkConnections)
+                    {
+                        TryAdd(GetPortsData(propCon.Source).SourceLinks, propCon.SourceField);
+                        TryAdd(GetPortsData(propCon.Target).TargetLinks, propCon.TargetField);
+                    }
+                    foreach (dynamic propCon in refRoot.EventConnections)
+                    {
+                        TryAdd(GetPortsData(propCon.Source).SourceEvents, propCon.SourceEvent.Name);
+                        TryAdd(GetPortsData(propCon.Target).TargetEvents, propCon.TargetEvent.Name);
+                    }
+
+                    HashSet<string> alreadyAcknowledgedTypes = new HashSet<string>();
+
+                    foreach (KeyValuePair<PointerRef, ClassPortsData> pair in refPorts)
+                    {
+                        if (pair.Key.Type == PointerRefType.Null)
+                            continue;
+
+                        if (!knownClasses.ContainsKey(pair.Value.TypeName))
+                            knownClasses.Add(pair.Value.TypeName, new ClassPortsData() { TypeName = pair.Value.TypeName});
+                        ClassPortsData loggedData = knownClasses[pair.Value.TypeName];
+
+                        loggedData.Occurences++;
+
+                        if (!alreadyAcknowledgedTypes.Contains(pair.Value.TypeName))
+                            loggedData.EbxOccurences++;
+                        alreadyAcknowledgedTypes.Add(pair.Value.TypeName);
+
+                        foreach (var item in pair.Value.SourceProperties)
+                            TryAdd(loggedData.SourceProperties, item.Key, item.Value.Occurences, true);
+                        foreach (var item in pair.Value.TargetProperties)
+                            TryAdd(loggedData.TargetProperties, item.Key, item.Value.Occurences, true);
+
+                        foreach (var item in pair.Value.SourceLinks)
+                            TryAdd(loggedData.SourceLinks, item.Key, item.Value.Occurences, true);
+                        foreach (var item in pair.Value.TargetLinks)
+                            TryAdd(loggedData.TargetLinks, item.Key, item.Value.Occurences, true);
+
+                        foreach (var item in pair.Value.SourceEvents)
+                            TryAdd(loggedData.SourceEvents, item.Key, item.Value.Occurences, true);
+                        foreach (var item in pair.Value.TargetEvents)
+                            TryAdd(loggedData.TargetEvents, item.Key, item.Value.Occurences, true);
+
+                    }
+                }
+
+                return ebxExportedTypesDict[fileGuid];
+            }
+
+
+
+            public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
+            {
+                FrostySaveFileDialog sfd = new FrostySaveFileDialog("Save Class Ports Usage Csv", "*.csv (CSV File)|*.csv", "PortsUsageCsv");
+                if (sfd.ShowDialog())
+                {
+                    FrostyTaskWindow.Show("Exporting Hash List", "", (task) =>
+                    {
+                        uint totalCount = App.AssetManager.GetEbxCount();
+                        uint idx = 0;
+
+                        foreach (EbxAssetEntry entry in App.AssetManager.EnumerateEbx())
+                        {
+                            task.Update(entry.Name, (idx++ / (double)totalCount) * 100.0d);
+                            GetExportedTypes(entry.Guid);
+                            //if (knownClasses.Count > 5) 
+                            //{
+                            //    break;
+                            //}
+                        }
+                        using (NativeWriter writer = new NativeWriter(new FileStream(sfd.FileName, FileMode.Create), false, true))
+                        {
+                            writer.WriteLine("Class,Class Occurences,Class Ebx Occurences,Port Type,Port Name,Is Property,Port Frequency,Port Unique Occurences, Port Total Occurences");
+                            void WritePort(ClassPortsData classData, PortData portData, string portType)
+                            {
+                                writer.WriteLine($"{classData.TypeName},{classData.Occurences},{classData.EbxOccurences},{portType},{portData.PortName},{TypeLibrary.GetType(classData.TypeName).GetProperty(portData.PortName) != null},{((float)portData.UniqueClassOccurences / (float)classData.Occurences) * 100.0},{portData.UniqueClassOccurences},{portData.Occurences}");
+                            }
+                            foreach(ClassPortsData classData in knownClasses.Values.OrderBy(classData => classData.Occurences))
+                            {
+                                foreach (PortData portData in classData.SourceProperties.Values)
+                                    WritePort(classData, portData, "SourceProperty");
+                                foreach (PortData portData in classData.TargetProperties.Values)
+                                    WritePort(classData, portData, "TargetProperty");
+                                foreach (PortData portData in classData.SourceLinks.Values)
+                                    WritePort(classData, portData, "SourceLink");
+                                foreach (PortData portData in classData.TargetLinks.Values)
+                                    WritePort(classData, portData, "TargetLink");
+                                foreach (PortData portData in classData.SourceEvents.Values)
+                                    WritePort(classData, portData, "SourceEvent");
+                                foreach (PortData portData in classData.TargetEvents.Values)
+                                    WritePort(classData, portData, "TargetEvent");
+                            }
+                        }
+                    });
+
+                    FrostyMessageBox.Show("Successfully exported Hashes List to " + sfd.FileName, "Frosty Editor");
+                }
+            });
+        }
     }
 }

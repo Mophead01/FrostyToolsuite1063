@@ -1357,12 +1357,24 @@ namespace Frosty.Core
                                     App.Logger.LogError(String.Format("Project Loading Error: Asset \"{0}\" is added to a bundle \"{1}\" which could not be found", ebxName, bunName));
                             }
 
-                            if (ebxJson.LinkedEbx.Count > 0)
-                                assetsToLinkToEbx.Add(refEntry, ebxJson.LinkedEbx);
-                            if (ebxJson.LinkedRes.Count > 0)
-                                assetsToLinkToRes.Add(refEntry, ebxJson.LinkedRes);
-                            if (ebxJson.LinkedChunk.Count > 0)
-                                assetsToLinkToChunk.Add(refEntry, ebxJson.LinkedChunk);
+                            lock (padlock)
+                            {
+                                if (ebxJson.LinkedEbx.Count > 0)
+                                    assetsToLinkToEbx.Add(refEntry, ebxJson.LinkedEbx);
+                                if (ebxJson.LinkedRes.Count > 0)
+                                {
+                                    try
+                                    {
+                                        assetsToLinkToRes.Add(refEntry, ebxJson.LinkedRes);
+                                    }
+                                    catch
+                                    {
+                                        App.Logger.Log("Could not match res for an asset ");
+                                    }
+                                }
+                                if (ebxJson.LinkedChunk.Count > 0)
+                                    assetsToLinkToChunk.Add(refEntry, ebxJson.LinkedChunk);
+                            }
 
                             ReadModifiedEbxJsonFormat(refEntry, ebxJson, file);
                             lock (padlock)

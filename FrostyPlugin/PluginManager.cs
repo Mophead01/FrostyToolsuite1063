@@ -230,6 +230,8 @@ namespace Frosty.Core
 
         public string GetPointerRefIdOverride(dynamic objData, int maxLength = -1)
         {
+            if (objData == null)
+                return "N/A PAD PR";
             string lookupName = objData.GetType().Name.ToLower();
             if (!m_pridOverrides.ContainsKey(lookupName))
                 return "";
