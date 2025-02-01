@@ -347,7 +347,7 @@ namespace FrostyEditor
                 if (timerInterval > 0)
                 {
                     m_autoSaveTimer = new System.Timers.Timer {Interval = timerInterval};
-                    m_autoSaveTimer.Elapsed += AutoSaveTimer_Elapsed;
+                    //m_autoSaveTimer.Elapsed += AutoSaveTimer_Elapsed;
                     m_autoSaveTimer.AutoReset = false;
                     m_autoSaveTimer.Start();
                 }
@@ -369,23 +369,23 @@ namespace FrostyEditor
         int lastSaveIndex = 0;
         private void AutoSaveTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (m_project.IsDirty)
-            {
-                ++lastSaveIndex;
-                if (lastSaveIndex > Config.Get<int>("AutosaveMaxCount", 10)) // Config.Get<int>("Autosave", "MaxCount", 10)
-                    lastSaveIndex = 1;
+            //if (m_project.IsDirty)
+            //{
+            //    ++lastSaveIndex;
+            //    if (lastSaveIndex > Config.Get<int>("AutosaveMaxCount", 10)) // Config.Get<int>("Autosave", "MaxCount", 10)
+            //        lastSaveIndex = 1;
 
-                string projectName = m_project.DisplayName.Remove(m_project.DisplayName.Length - 10);
-                FileInfo fi = new FileInfo("Autosave/" + projectName + "_" + lastSaveIndex.ToString("D3") + ".fbproject");
+            //    string projectName = m_project.DisplayName.Remove(m_project.DisplayName.Length - 10);
+            //    FileInfo fi = new FileInfo("Autosave/" + projectName + "_" + lastSaveIndex.ToString("D3") + ".fbproject");
 
-                App.Logger.Log("Initiated autosave of project to " + fi.FullName);
+            //    App.Logger.Log("Initiated autosave of project to " + fi.FullName);
 
-                // save project but dont update dirty state
-                m_project.Save(overrideFilename: fi.FullName, updateDirtyState: false);
-            }
+            //    // save project but dont update dirty state
+            //    m_project.Save(overrideFilename: fi.FullName, updateDirtyState: false);
+            //}
 
-            // begin timer again
-            m_autoSaveTimer?.Start();
+            //// begin timer again
+            //m_autoSaveTimer?.Start();
         }
 
         private void exitMenuItem_Click(object sender, RoutedEventArgs e)
@@ -621,6 +621,7 @@ namespace FrostyEditor
                 string cliCommand = $"start_server --module-branch=feat/debug-ui --verbose --server-password \"Mophead{randomNumber}\" --debug --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
                 App.Logger.Log(cliCommand);
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
+                psi.EnvironmentVariables["KYBER_ONLINE_MODE"] = "0";
                 if (KyberSettings.DebugMode || true)
                 {
                     psi.EnvironmentVariables["KYBER_LOG_LEVEL"] = "debug";

@@ -100,6 +100,7 @@ namespace Frosty.Core
 
         public void Save(string overrideFilename = "", bool updateDirtyState = true, bool overrideData = false)
         {
+            App.AssetManager.UpdateEbxSha1s();
             string actualFilename = filename;
             if (!string.IsNullOrEmpty(overrideFilename))
                 actualFilename = overrideFilename;
@@ -508,7 +509,7 @@ namespace Frosty.Core
                             string bunName = file.Substring(bundlesFolder.Length).Replace("\\", "/");
                             int bunId = App.AssetManager.GetBundleId(bunName);
                             if (bunId == -1)
-                                File.Delete(file + ".json");
+                                File.Delete(@"\\?\" + Path.GetFullPath(file + ".json"));
                         }
                     }
                     if (Directory.Exists(ebxFolder))
@@ -520,9 +521,9 @@ namespace Frosty.Core
                             EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(ebxName);
                             if (refEntry == null || !refEntry.IsModified)
                             {
-                                File.Delete(file + ".json");
-                                if (File.Exists(file + ".bin"))
-                                    File.Delete(file + ".bin");
+                                File.Delete(@"\\?\" + Path.GetFullPath(file + ".json"));
+                                if (File.Exists(@"\\?\" + Path.GetFullPath(file + ".bin")))
+                                    File.Delete(@"\\?\" + Path.GetFullPath(file + ".bin"));
                             }
                         }
                     }
@@ -535,9 +536,9 @@ namespace Frosty.Core
                             ResAssetEntry refEntry = App.AssetManager.GetResEntry(resName);
                             if (refEntry == null || !refEntry.IsModified)
                             {
-                                File.Delete(file + ".json");
-                                if (File.Exists(file + ".res"))
-                                    File.Delete(file + ".res");
+                                File.Delete(@"\\?\" + Path.GetFullPath(file + ".json"));
+                                if (File.Exists(@"\\?\" + Path.GetFullPath(file + ".res")))
+                                    File.Delete(@"\\?\" + Path.GetFullPath(file + ".res"));
                             }
                         }
                     }
@@ -550,9 +551,9 @@ namespace Frosty.Core
                             ChunkAssetEntry refEntry = App.AssetManager.GetChunkEntry(new Guid(chkName));
                             if (refEntry == null || !refEntry.IsModified)
                             {
-                                File.Delete(file + ".json");
-                                if (File.Exists(file + ".chunk"))
-                                    File.Delete(file + ".chunk");
+                                File.Delete(@"\\?\" + Path.GetFullPath(file + ".json"));
+                                if (File.Exists(@"\\?\" + Path.GetFullPath(file + ".chunk")))
+                                    File.Delete(@"\\?\" + Path.GetFullPath(file + ".chunk"));
                             }
                         }
                     }
@@ -589,20 +590,13 @@ namespace Frosty.Core
                 {
                     if (refEntry.IsImaginary)
                         return;
-                    string intendedFileName = string.Format("{0}{1}.json", ebxFolder, refEntry.Name);
-                    if (intendedFileName.Count() >= 260 || intendedFileName.LastIndexOf("//") >= 248)
-                    {
-                        App.Logger.LogError(string.Format("Project Writing Error: Cannot write asset \"{0}\" as the intended path is too long \"{1}\"", refEntry.DisplayName, intendedFileName));
-                        return;
-                    }
-
-                    FileInfo ebxJson = new FileInfo(string.Format("{0}{1}.json", ebxFolder, refEntry.Name));
+                    FileInfo ebxJson = new FileInfo(@"\\?\" + Path.GetFullPath(string.Format("{0}{1}.json", ebxFolder, refEntry.Name)));
                     if (!ebxJson.Directory.Exists)
                         Directory.CreateDirectory(ebxJson.DirectoryName);
                     EbxJson ebx = new EbxJson(refEntry);
                     File.WriteAllText(ebxJson.FullName, JsonConvert.SerializeObject(ebx, Formatting.Indented));
 
-                    string binName = string.Format("{0}{1}.bin", ebxFolder, refEntry.Name);
+                    string binName = @"\\?\" + Path.GetFullPath(string.Format("{0}{1}.bin", ebxFolder, refEntry.Name));
                     if (refEntry.HasModifiedData && (overrideData || refEntry.ModifiedEntry.IsDirty || !File.Exists(binName)))
                     {
                         ModifiedResource modifiedResource = refEntry.ModifiedEntry.DataObject as ModifiedResource;
@@ -639,14 +633,14 @@ namespace Frosty.Core
                 {
                     if (resEntry.IsImaginary)
                         return;
-                    FileInfo resFileInfo = new FileInfo(string.Format("{0}{1}.json", resFolder, resEntry.Name));
+                    FileInfo resFileInfo = new FileInfo(@"\\?\" + Path.GetFullPath(string.Format("{0}{1}.json", resFolder, resEntry.Name)));
                     if (!resFileInfo.Directory.Exists)
                         Directory.CreateDirectory(resFileInfo.DirectoryName);
 
                     ResJson resJson = new ResJson(resEntry);
                     File.WriteAllText(resFileInfo.FullName, JsonConvert.SerializeObject(resJson, Formatting.Indented));
 
-                    string resName = string.Format("{0}{1}.res", resFolder, resEntry.Name);
+                    string resName = @"\\?\" + Path.GetFullPath(string.Format("{0}{1}.res", resFolder, resEntry.Name));
                     if (resEntry.HasModifiedData && (overrideData || resEntry.ModifiedEntry.IsDirty || !File.Exists(resName)))
                     {
                         using (NativeWriter writer = new NativeWriter(new FileStream(resName, FileMode.Create)))
@@ -672,14 +666,14 @@ namespace Frosty.Core
                 {
                     if (chkEntry.IsImaginary)
                         return;
-                    FileInfo chkFileInfo = new FileInfo(string.Format("{0}{1}.json", chkFolder, chkEntry.Name));
+                    FileInfo chkFileInfo = new FileInfo(@"\\?\" + Path.GetFullPath(string.Format("{0}{1}.json", chkFolder, chkEntry.Name)));
                     if (!chkFileInfo.Directory.Exists)
                         Directory.CreateDirectory(chkFileInfo.DirectoryName);
 
                     ChkJson chkJson = new ChkJson(chkEntry);
                     File.WriteAllText(chkFileInfo.FullName, JsonConvert.SerializeObject(chkJson, Formatting.Indented));
 
-                    string chkName = string.Format("{0}{1}.chunk", chkFolder, chkEntry.Name);
+                    string chkName = string.Format(@"\\?\" + Path.GetFullPath(string.Format("{0}{1}.chunk", chkFolder, chkEntry.Name)), chkFolder, chkEntry.Name);
                     if (chkEntry.HasModifiedData && (overrideData || chkEntry.ModifiedEntry.IsDirty || !File.Exists(chkName)))
                     {
                         using (NativeWriter writer = new NativeWriter(new FileStream(chkName, FileMode.Create)))
@@ -1299,7 +1293,7 @@ namespace Frosty.Core
                             string bunName = file.Substring(bundleFolder.Length).Replace("\\", "/");
                             if (bunJson.OriginalName != null && bunName.ToLower() == bunJson.OriginalName.ToLower() && bunName != bunJson.OriginalName)
                             {
-                                App.Logger.Log($"{bunName}-{bunJson.OriginalName}");
+                                //App.Logger.Log($"{bunName}-{bunJson.OriginalName}");
                                 bunName = bunJson.OriginalName;
                             }
                             int bId = App.AssetManager.GetBundleId(bunName);
@@ -1326,11 +1320,11 @@ namespace Frosty.Core
 
                         Parallel.ForEach(files, file =>
                         {
-                            EbxJson ebxJson = JsonConvert.DeserializeObject<EbxJson>(File.ReadAllText(file + ".json"));
+                            EbxJson ebxJson = JsonConvert.DeserializeObject<EbxJson>(File.ReadAllText(@"\\?\" + Path.GetFullPath(file + ".json")));
                             string ebxName = file.Substring(ebxFolder.Length).Replace("\\", "/");
                             if (ebxJson.OriginalName != null && ebxName.ToLower() == ebxJson.OriginalName.ToLower() && ebxName != ebxJson.OriginalName)
                             {
-                                App.Logger.Log($"{ebxName}-{ebxJson.OriginalName}");
+                                //App.Logger.Log($"{ebxName}-{ebxJson.OriginalName}");
                                 ebxName = ebxJson.OriginalName;
                             }
                             EbxAssetEntry refEntry = App.AssetManager.GetEbxEntry(ebxName);
@@ -1391,11 +1385,11 @@ namespace Frosty.Core
                         List<string> files = System.IO.Directory.GetFiles(resFolder, "*.json", SearchOption.AllDirectories).Select(o => System.IO.Path.ChangeExtension(o, null)).ToList();
                         foreach (string file in files)
                         {
-                            ResJson resJson = JsonConvert.DeserializeObject<ResJson>(File.ReadAllText(file + ".json"));
+                            ResJson resJson = JsonConvert.DeserializeObject<ResJson>(File.ReadAllText(@"\\?\" + Path.GetFullPath(file + ".json")));
                             string resName = file.Substring(resFolder.Length).Replace("\\", "/");
                             if (resJson.OriginalName != null && resName.ToLower() == resJson.OriginalName.ToLower() && resName != resJson.OriginalName)
                             {
-                                App.Logger.Log($"{resName}-{resJson.OriginalName}");
+                                //App.Logger.Log($"{resName}-{resJson.OriginalName}");
                                 resName = resJson.OriginalName;
                             }
                             ResAssetEntry resEntry = App.AssetManager.GetResEntry(resName);
@@ -1529,8 +1523,8 @@ namespace Frosty.Core
                 return;
             EbxJsonModifiedData modifiedJson = ebxJson.ModifiedEntry;
 
-            string binName = fileName + ".bin";
-            if (!System.IO.File.Exists(fileName + ".bin"))
+            string binName = @"\\?\" + Path.GetFullPath(fileName + ".bin");
+            if (!System.IO.File.Exists(binName))
             {
                 App.Logger.LogError(String.Format("Project Loading Error: Modified Asset \"{0}\" has no binary file \"{1}\". Cannot read modified data", refEntry.Name, binName));
                 return;
@@ -1603,8 +1597,8 @@ namespace Frosty.Core
                 return;
             ResJsonModifiedData modifiedJson = resJson.ModifiedEntry;
 
-            string binName = fileName + ".res";
-            if (!System.IO.File.Exists(fileName + ".res"))
+            string binName = @"\\?\" + Path.GetFullPath(fileName + ".res");
+            if (!System.IO.File.Exists(binName))
             {
                 App.Logger.LogError(String.Format("Project Loading Error: Modified Res Asset \"{0}\" has no res file \"{1}\". Cannot read modified data", resEntry.Name, binName));
                 return;
@@ -1655,8 +1649,8 @@ namespace Frosty.Core
                 return;
             ChkJsonModifiedData modifiedJson = chkJson.ModifiedEntry;
 
-            string binName = fileName + ".chunk";
-            if (!System.IO.File.Exists(fileName + ".chunk"))
+            string binName = @"\\?\" + Path.GetFullPath(fileName + ".chunk");
+            if (!System.IO.File.Exists(binName))
             {
                 App.Logger.LogError(String.Format("Project Loading Error: Modified Chunk Asset \"{0}\" has no res file \"{1}\". Cannot read modified data", chkEntry.Name, binName));
                 return;

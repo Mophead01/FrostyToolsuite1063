@@ -1304,6 +1304,7 @@ namespace FrostySdk.Managers
             entry.ModifiedEntry.Data = (texture != null) ? Utils.CompressTexture(buffer, texture: texture, compressionOverride: compressType) : Utils.CompressFile(buffer, compressionOverride: compressType);
             entry.ModifiedEntry.Sha1 = GenerateSha1(entry.ModifiedEntry.Data);
             entry.ModifiedEntry.LogicalSize = (uint)buffer.Length;
+            entry.ModifiedEntry.IsDirty = true;
 
             if (texture != null)
             {
@@ -1312,7 +1313,6 @@ namespace FrostySdk.Managers
                 entry.ModifiedEntry.RangeStart = texture.RangeStart;
                 entry.ModifiedEntry.RangeEnd = (uint)entry.ModifiedEntry.Data.Length;
                 entry.ModifiedEntry.FirstMip = texture.FirstMip;
-                entry.ModifiedEntry.IsDirty = true;
             }
 
             entry.IsDirty = true;
@@ -1434,18 +1434,46 @@ namespace FrostySdk.Managers
             object modifiedResource = asset.SaveModifiedResource();
             entry.ModifiedEntry.DataObject = modifiedResource ?? asset;
             entry.ModifiedEntry.OriginalSize = 0;
-            byte[] buf = null;
-            using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateProjectWriter(new MemoryStream(), EbxWriteFlags.IncludeTransient))
-            {
-                ebxWriter.WriteAsset(asset);
-                buf = ebxWriter.ToByteArray();
-                entry.ModifiedEntry.Sha1 = GenerateSha1(buf);
-            }
+            //byte[] buf = null;
+            //using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateProjectWriter(new MemoryStream(), EbxWriteFlags.IncludeTransient))
+            //{
+            //    ebxWriter.WriteAsset(asset);
+            //    buf = ebxWriter.ToByteArray();
+            //    entry.ModifiedEntry.Sha1 = GenerateSha1(buf);
+            //}
+            modifiedEbxNeedSha1Updating.Add(entry);
             entry.ModifiedEntry.IsTransientModified = asset.TransientEdit;
             entry.ModifiedEntry.DependentAssets.Clear();
             entry.ModifiedEntry.DependentAssets.AddRange(asset.Dependencies);
             entry.ModifiedEntry.IsDirty = true;
             entry.IsDirty = true;
+        }
+
+        private HashSet<EbxAssetEntry> modifiedEbxNeedSha1Updating = new HashSet<EbxAssetEntry>();
+
+        public void UpdateEbxSha1s()
+        {
+            foreach (EbxAssetEntry refEntry in modifiedEbxNeedSha1Updating.ToList())
+            {
+                modifiedEbxNeedSha1Updating.Remove(refEntry);
+                if (refEntry.ModifiedEntry != null && refEntry.ModifiedEntry.DataObject is EbxAsset asset)
+                {
+                    if (refEntry.Type == "CharacterStateOwnerData")
+                    {
+                        refEntry.ModifiedEntry.Sha1 = refEntry.BaseSha1;
+                    }
+                    else
+                    {
+                        byte[] buf = null;
+                        using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateProjectWriter(new MemoryStream(), EbxWriteFlags.IncludeTransient))
+                        {
+                            ebxWriter.WriteAsset(asset);
+                            buf = ebxWriter.ToByteArray();
+                            refEntry.ModifiedEntry.Sha1 = GenerateSha1(buf);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>

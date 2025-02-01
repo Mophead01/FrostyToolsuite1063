@@ -625,7 +625,7 @@ namespace Frosty.Core.Controls
             }
 
             bool retVal = true;
-            foreach (var item in Children)
+            foreach (var item in Children.ToList())
             {
                 string name = item.Name;
                 if (item.IsArrayChild)

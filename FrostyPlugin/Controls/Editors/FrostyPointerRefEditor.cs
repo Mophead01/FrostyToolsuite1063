@@ -53,6 +53,14 @@ namespace Frosty.Core.Controls.Editors
         public uint Id { get; set; }
         public int Index { get; set; }
         public bool HasCustomTransientId { get; set; }
+        public string TypeOverrideName { get; set; }
+
+        public string PreviewName 
+        { 
+            get {
+                return Name + (TypeOverrideName == "" ? "" : " (" + TypeOverrideName + ")");
+            } 
+        }
     }
 
     public class ClassTypeToStringConverter : IValueConverter
@@ -63,7 +71,7 @@ namespace Frosty.Core.Controls.Editors
             string paramStr = (string)parameter;
 
             if (paramStr == "Name")
-                return classType.Name;
+                return classType.PreviewName;
 
             return (classType.Guid != Guid.Empty) ? classType.Guid.ToString() : "00000000-0000-0000-0000-" + classType.Id.ToString("x12");
         }
@@ -235,7 +243,7 @@ namespace Frosty.Core.Controls.Editors
                 string filterText = filter.Text.ToLower();
 
                 // search name by default
-                popup.Items.Filter = (object a) => { return ((PointerRefClassType)a).Name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0; };
+                popup.Items.Filter = (object a) => { return ((PointerRefClassType)a).PreviewName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0; };
 
                 // search id instead if valid hex
                 if (uint.TryParse(filterText, NumberStyles.HexNumber, null, out uint uintResult))
@@ -245,7 +253,7 @@ namespace Frosty.Core.Controls.Editors
                     // if filter was given a valid hex but no results found, assume user was searching for name. ex. "eff" would be valid hex but is likely a name search.
                     if (popup.Items.Count == 0)
                     {
-                        popup.Items.Filter = (object a) => { return ((PointerRefClassType)a).Name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0; };
+                        popup.Items.Filter = (object a) => { return ((PointerRefClassType)a).PreviewName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0; };
                     }
                 }
 
@@ -446,12 +454,13 @@ namespace Frosty.Core.Controls.Editors
                         Guid = guid.ExportedGuid,
                         Id = (uint)guid.InternalId,
                         Index = assignObjs.Count - 1,
-                        HasCustomTransientId = obj.__Id != obj.GetType().Name
+                        HasCustomTransientId = obj.__Id != obj.GetType().Name,
+                        TypeOverrideName = App.PluginManager.GetPointerRefIdOverride(obj, 100)
                     });
                 }
             }
 
-            types = types.OrderBy(t => !t.HasCustomTransientId).ThenBy(t => t.Type.Name).ThenBy(t => t.Guid).ThenBy(t => t.Id).ToList();
+            types = types.OrderBy(t => !t.HasCustomTransientId).ThenBy(t => t.Type.Name).ThenBy(t => t.TypeOverrideName).ThenBy(t => t.Guid).ThenBy(t => t.Id).ToList();
 
             //types.Sort((PointerRefClassType a, PointerRefClassType b) => 
             //{
@@ -519,7 +528,8 @@ namespace Frosty.Core.Controls.Editors
                         Guid = obj.GetInstanceGuid().ExportedGuid,
                         Id = 0,
                         Index = assignObjs.Count - 1,
-                        HasCustomTransientId = obj.__Id != obj.GetType().Name
+                        HasCustomTransientId = obj.__Id != obj.GetType().Name,
+                        TypeOverrideName = App.PluginManager.GetPointerRefIdOverride(obj, 100),
                     });
 
                     count++;
@@ -547,13 +557,14 @@ namespace Frosty.Core.Controls.Editors
             else
             {
                 // display list
-                types = types.OrderBy(t => !t.HasCustomTransientId).ThenBy(t => t.Type.Name).ThenBy(t => t.Guid).ThenBy(t => t.Id).ToList();
+                //types = types.OrderBy(t => !t.HasCustomTransientId).ThenBy(t => t.Type.Name).ThenBy(t => t.TypeOverrideName).ThenBy(t => t.Guid).ThenBy(t => t.Id).ToList();
 
                 types.Sort((PointerRefClassType a, PointerRefClassType b) =>
                 {
                     int i = a.Id.CompareTo(b.Id);
                     return (i == 0) ? a.Guid.CompareTo(b.Guid) : i;
                 });
+                types = types.OrderBy(t => !t.HasCustomTransientId).ThenBy(t => t.Type.Name).ThenBy(t => t.TypeOverrideName).ThenBy(t => t.Guid).ThenBy(t => t.Id).ToList();
 
                 popup.ItemsSource = types;
                 popup.IsDropDownOpen = true;

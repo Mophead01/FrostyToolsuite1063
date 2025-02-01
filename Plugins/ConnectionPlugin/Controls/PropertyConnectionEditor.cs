@@ -58,6 +58,7 @@ namespace ConnectionPlugin.Editors
             {
                 newFlags |= 8;
             }
+            //App.Logger.Log(newFlags.ToString());
             propertyConnection.Flags = newFlags;
         }
         public uint[] GetPConnectionDataFromFlags(uint flags)
