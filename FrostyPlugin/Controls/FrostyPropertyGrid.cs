@@ -1376,6 +1376,7 @@ namespace Frosty.Core.Controls
                             if (editorType == null)
                             {
                                 editorType = typeof(FrostyStructEditor);
+
                             }
                         }
                     }

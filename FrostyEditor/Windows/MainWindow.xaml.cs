@@ -591,21 +591,25 @@ namespace FrostyEditor
                 // Export Kyber commands
                 //
                 List<string> commands = new List<string>();
-                if (KyberSettings.AutoplayerType == "Dummy Bots")
+                if (!KyberSettings.FrontendLaunch)
                 {
-                    commands.Add($"Whiteshark.AutoBalanceTeamsOnNeutral 1");
-                    commands.Add($"AutoPlayers.PlayerCount {KyberSettings.Team1Bots + KyberSettings.Team2Bots}");
-                }
-                else if (KyberSettings.AutoplayerType == "Gamemode Tied")
-                {
-                    commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam1 {KyberSettings.Team1Bots}");
-                    commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam2 {KyberSettings.Team2Bots}");
+                    if (KyberSettings.AutoplayerType == "Dummy Bots")
+                    {
+                        commands.Add($"Whiteshark.AutoBalanceTeamsOnNeutral 1");
+                        commands.Add($"AutoPlayers.PlayerCount {KyberSettings.Team1Bots + KyberSettings.Team2Bots}");
+                    }
+                    else if (KyberSettings.AutoplayerType == "Gamemode Tied")
+                    {
+                        commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam1 {KyberSettings.Team1Bots}");
+                        commands.Add($"AutoPlayers.ForceFillGameplayBotsTeam2 {KyberSettings.Team2Bots}");
+                    }
+
+                    commands.Add($"Kyber.SetTeamByIndex 0 {KyberSettings.TeamId}");
+                    if (KyberSettings.Autostart)
+                        commands.Add($"Kyber.startgame");  //commands.Add($"Kyber.Delay 5 startgame");
                 }
 
-                commands.Add($"Kyber.SetTeamByIndex 0 {KyberSettings.TeamId}");
-                if (KyberSettings.Autostart)
-                    commands.Add($"Kyber.startgame");  //commands.Add($"Kyber.Delay 5 startgame");
-                foreach(string command in KyberSettings.LaunchCommands)
+                foreach (string command in KyberSettings.LaunchCommands)
                     commands.Add($"{command}");
 
                 using (StreamWriter writer = new StreamWriter("Mods/Kyber/Kyber-Commands.txt"))
@@ -618,11 +622,14 @@ namespace FrostyEditor
                 //  Execute kyber_cli.exe
                 //
                 int randomNumber = random.Next();
-                string cliCommand = $"start_server --module-branch=feat/debug-ui --verbose --server-password \"Mophead{randomNumber}\" --debug --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
+                string cliCommand = (KyberSettings.FrontendLaunch ? "start_game" : "start_server") + $" --module-branch=feat/debug-ui --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\"" + (KyberSettings.DebugMode ? " --verbose --debug" : "");
+                if (!KyberSettings.FrontendLaunch)
+                    cliCommand += $" --server-password --no-dedicated --server-name \"Test\" \"Mophead{randomNumber}\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
                 App.Logger.Log(cliCommand);
+
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
                 psi.EnvironmentVariables["KYBER_ONLINE_MODE"] = "0";
-                if (KyberSettings.DebugMode || true)
+                if (KyberSettings.DebugMode)
                 {
                     psi.EnvironmentVariables["KYBER_LOG_LEVEL"] = "debug";
                     psi.EnvironmentVariables["MAXIMA_LAUNCH_ARGS"] = "-Kyber.RenderPropertyDebug true";

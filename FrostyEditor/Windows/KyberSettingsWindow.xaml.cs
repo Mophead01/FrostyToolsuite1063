@@ -99,6 +99,12 @@ namespace FrostyEditor.Windows
             autoStartComboBox.Items.Add("Disabled");
             autoStartComboBox.Items.Add("Enabled");
 
+            frontendComboBox.Items.Add("Disabled");
+            frontendComboBox.Items.Add("Enabled");
+
+            debugModeComboBox.Items.Add("Disabled");
+            debugModeComboBox.Items.Add("Enabled");
+
             //Fill Gamemodes/Levels
             EbxAssetEntry modesEntry = App.AssetManager.GetEbxEntry("UI/Data/GameModes/GameModes");
             dynamic modesRoot = App.AssetManager.GetEbx(modesEntry).RootObject;
@@ -172,7 +178,7 @@ namespace FrostyEditor.Windows
 
 
             gameModesData = gameModesData.OrderBy(data => data.Item2).ToList();
-            gameModesData.Insert(0, ("NOGAMEMODE", "Main Menu \t[FRONTEND]", new List<(string, string)>() { ("win32/Levels/Frontend/Frontend", "Frontend")}, 0));
+            //gameModesData.Insert(0, ("NOGAMEMODE", "Main Menu \t[FRONTEND]", new List<(string, string)>() { ("win32/Levels/Frontend/Frontend", "Frontend")}, 0));
             foreach (var item in gameModesData)
             {
                 gamemodeComboBox.Items.Add(item.Item2);
@@ -185,7 +191,9 @@ namespace FrostyEditor.Windows
             gamemodeComboBox.SelectedIndex = gameModesData.Select(data => data.Item1).Contains(KyberSettings.GameMode) ? gameModesData.Select(data => data.Item1).ToList().IndexOf(KyberSettings.GameMode) : 0;
             RepopulateLevelComboBox(0);
             levelComboBox.SelectedIndex = gameModesData[gamemodeComboBox.SelectedIndex].Item3.Select(data => data.Item1).Contains(KyberSettings.Level) ? gameModesData[gamemodeComboBox.SelectedIndex].Item3.Select(data => data.Item1).ToList().IndexOf(KyberSettings.Level) : 0;
+            frontendComboBox.SelectedIndex = KyberSettings.FrontendLaunch ? 1 : 0;
             autoStartComboBox.SelectedIndex = KyberSettings.Autostart ? 1 : 0;
+            debugModeComboBox.SelectedIndex = KyberSettings.DebugMode ? 1 : 0;
             teamIdComboBox.SelectedIndex = KyberSettings.TeamId;
             team1AutoplayerCountComboBox.SelectedIndex = KyberSettings.Team1Bots;
             team2AutoplayerCountComboBox.SelectedIndex = KyberSettings.Team2Bots;
@@ -215,9 +223,11 @@ namespace FrostyEditor.Windows
         {
             KyberSettings.CliDirectory = kyberCliTextBox.Text;
             KyberSettings.SelectedLoadOrder = loadOrderComboBox.Text;
+            KyberSettings.FrontendLaunch = (frontendComboBox.Text == "Enabled");
             KyberSettings.GameMode = gameModesData[gamemodeComboBox.SelectedIndex].Item1;
             KyberSettings.Level = gameModesData[gamemodeComboBox.SelectedIndex].Item3[levelComboBox.SelectedIndex].Item1;
             KyberSettings.Autostart = (autoStartComboBox.Text == "Enabled");
+            KyberSettings.DebugMode = (debugModeComboBox.Text == "Enabled");
             KyberSettings.TeamId = teamIdComboBox.SelectedIndex;
             KyberSettings.AutoplayerType = autoplayerTypeComboBox.Text;
             KyberSettings.Team1Bots = team1AutoplayerCountComboBox.SelectedIndex;

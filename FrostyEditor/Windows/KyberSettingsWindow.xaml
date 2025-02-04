@@ -18,7 +18,7 @@
         <Grid Background="{StaticResource ListBackground}">
             <DockPanel LastChildFill="True">
                 <Grid Margin="5" DockPanel.Dock="Top">
-                    <Label Content="Temp Description." FontFamily="Global User Interface" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
+                    <Label Content="Kyber Launcher Options." FontFamily="Global User Interface" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
                 </Grid>
                 
                 <Border DockPanel.Dock="Top" Background="{StaticResource ControlBackground}" Height="2"/>
@@ -32,6 +32,16 @@
                         <DockPanel LastChildFill="True">
                             <Label Content="Load Order " FontFamily="Global User Interface" Width="125"/>
                             <ComboBox x:Name="loadOrderComboBox" VerticalContentAlignment="Center" Margin="1" BorderThickness="1"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="True">
+                            <Label Content="DebugMode " FontFamily="Global User Interface" Width="125"/>
+                            <ComboBox x:Name="debugModeComboBox" VerticalContentAlignment="Center" Margin="1" BorderThickness="1"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="True" Margin="15">
+                        </DockPanel>
+                        <DockPanel LastChildFill="True">
+                            <Label Content="Frontend " FontFamily="Global User Interface" Width="125"/>
+                            <ComboBox x:Name="frontendComboBox" VerticalContentAlignment="Center" Margin="1" BorderThickness="1"/>
                         </DockPanel>
                         <DockPanel LastChildFill="True">
                             <Label Content="Gamemode " FontFamily="Global User Interface" Width="125"/>
@@ -53,9 +63,9 @@
                             <Label Content="Autoplayers " FontFamily="Global User Interface" Width="125"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
                                 <DockPanel LastChildFill="True">
                                     <Label  Content="Type" FontFamily="Global User Interface" Width="75"/>

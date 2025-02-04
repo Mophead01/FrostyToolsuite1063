@@ -21,7 +21,12 @@ namespace Frosty.Core.Controls.Editors
             if (meta != null && meta.Type == FrostySdk.IO.EbxFieldType.Struct)
             {
                 DisplayNameAttribute attr = valueType.GetCustomAttribute<DisplayNameAttribute>();
-                return (attr != null) ? attr.Name : valueType.Name;
+                if (attr == null)
+                {
+                    string ExtraInfo = App.PluginManager.GetPointerRefIdOverride(value);
+                    return (ExtraInfo == "") ? valueType.Name : valueType.Name + " - " + ExtraInfo;
+                }
+                return attr.Name;
             }
 
             return value.ToString();
