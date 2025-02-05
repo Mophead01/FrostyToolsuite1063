@@ -624,7 +624,7 @@ namespace FrostyEditor
                 int randomNumber = random.Next();
                 string cliCommand = (KyberSettings.FrontendLaunch ? "start_game" : "start_server") + $" --module-branch=feat/debug-ui --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\"" + (KyberSettings.DebugMode ? " --verbose --debug" : "");
                 if (!KyberSettings.FrontendLaunch)
-                    cliCommand += $" --server-password --no-dedicated --server-name \"Test\" \"Mophead{randomNumber}\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
+                    cliCommand += $" --server-password \"Mophead{randomNumber}\" --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
                 App.Logger.Log(cliCommand);
 
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);

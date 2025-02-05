@@ -7,10 +7,14 @@ namespace Frosty.Core.Attributes
     {
         public string LookupName { get; set; }
         public Type PrIdType { get; set; }
-        public RegisterPointerRefIdOverrideAttribute(string lookupName, Type type)
+        public bool ApplyToChildClasses { get; set; }
+        public int Priority { get; set; }
+        public RegisterPointerRefIdOverrideAttribute(string lookupName, Type type, bool applyToChildClasses = false, int priority = -1)
         {
             LookupName = lookupName;
             PrIdType = type;
+            ApplyToChildClasses = applyToChildClasses;
+            Priority = priority;
         }
     }
 }

@@ -63,6 +63,8 @@ namespace Frosty.Core
         private List<string> m_userShaders = new List<string>();
 
         private Dictionary<string, PrIdExtension> m_pridOverrides = new Dictionary<string, PrIdExtension>();
+        private Dictionary<(string, int), Type> m_childPrIdOverridesPriority = new Dictionary<(string, int), Type>();
+        private Dictionary<string, Type> m_subPrIdOverrides = new Dictionary<string, Type>();
 
         /// <summary>
         /// Retrieves a collection of data explorer context menu item extensions that have been loaded from plugins.
@@ -234,7 +236,19 @@ namespace Frosty.Core
                 return "N/A PAD PR";
             string lookupName = objData.GetType().Name.ToLower();
             if (!m_pridOverrides.ContainsKey(lookupName))
-                return "";
+            {
+                foreach (KeyValuePair<string, Type> pair in m_subPrIdOverrides)
+                {
+                    if (TypeLibrary.IsSubClassOf(objData.GetType().Name, pair.Key))
+                    {
+                        lookupName = pair.Key.ToLower();
+                        break;
+                    }
+                }
+                if (!m_pridOverrides.ContainsKey(lookupName))
+                    return "";
+            }
+
             string overrideString = (string)((PrIdExtension)m_pridOverrides[lookupName]).GetOverrideString(objData);
             if (maxLength < 4 || overrideString.Length < maxLength)
                 return overrideString;
@@ -490,6 +504,11 @@ namespace Frosty.Core
                     else if (tmpAttr is RegisterPointerRefIdOverrideAttribute attr5)
                     {
                         m_pridOverrides.Add(attr5.LookupName.ToLower(), (PrIdExtension)Activator.CreateInstance(attr5.PrIdType));
+                        if (attr5.ApplyToChildClasses)
+                        {
+                            m_childPrIdOverridesPriority.Add((attr5.LookupName, attr5.Priority), attr5.PrIdType);
+                            m_subPrIdOverrides = m_childPrIdOverridesPriority.OrderByDescending(item => item.Key.Item2).ToDictionary(item => item.Key.Item1, item => item.Value);
+                        }
                     }
                     else if (tmpAttr is RegisterExportActionAttribute attr6)
                     {
