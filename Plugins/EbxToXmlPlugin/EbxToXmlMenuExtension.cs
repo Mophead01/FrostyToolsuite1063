@@ -8,6 +8,7 @@ using FrostySdk.Ebx;
 using FrostySdk.IO;
 using FrostySdk.Managers;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using SoundEditorPlugin;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +24,7 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using WaveFormRendererLib;
 using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 using static System.Windows.Forms.LinkLabel;
 
@@ -32,7 +34,7 @@ namespace EbxToXmlPlugin
     {
         public static string TopLevel = "Tools";
 
-        public static string SubLevel = "Export Bulk";
+        public static string SubLevel = "Bulk";
 
         public static ImageSource pluginimageSource = new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Database.png") as ImageSource;
         public class EbxToXmlMenuExtension : MenuExtension
@@ -42,7 +44,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "EBX to XML";
+            public override string MenuItemName => "Export EBX to XML";
 
             public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
             {
@@ -98,7 +100,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "EBX to BIN";
+            public override string MenuItemName => "Export EBX to BIN";
 
             public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
             {
@@ -156,7 +158,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Chunks";
+            public override string MenuItemName => "Export Chunks";
 
             public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
             {
@@ -214,7 +216,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Res";
+            public override string MenuItemName => "Export Res";
 
             public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
             {
@@ -272,7 +274,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Classes Usage to CSV";
+            public override string MenuItemName => "Export Classes Usage to CSV";
             public static bool HasProperty(object obj, string propertyName)
             {
                 return obj.GetType().GetProperty(propertyName) != null;
@@ -393,7 +395,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Hashes List";
+            public override string MenuItemName => "Export Hashes List";
             public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Properties.png") as ImageSource;
 
             public Dictionary<CString, int> Hashes = new Dictionary<CString, int>();
@@ -501,7 +503,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Object Input/Outputs List";
+            public override string MenuItemName => "Export Object Input/Outputs List";
             public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Properties.png") as ImageSource;
 
             public Dictionary<CString, int> Hashes = new Dictionary<CString, int>();
@@ -631,7 +633,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Schametics Channel Hash List";
+            public override string MenuItemName => "Export Schametics Channel Hash List";
             public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Properties.png") as ImageSource;
 
             public Dictionary<string, Dictionary<EbxAssetEntry, int>> hashList = new Dictionary<string, Dictionary<EbxAssetEntry, int>>();
@@ -689,7 +691,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Stat Events to CSV";
+            public override string MenuItemName => "Export Stat Events to CSV";
 
             public class StatCriteriaData
             {
@@ -810,7 +812,7 @@ namespace EbxToXmlPlugin
             public override string TopLevelMenuName => TopLevel;
             public override string SubLevelMenuName => SubLevel;
 
-            public override string MenuItemName => "Class Ports Csv";
+            public override string MenuItemName => "Export Class Ports Csv";
             public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/FrostyEditor;component/Images/Properties.png") as ImageSource;
 
             private class PortData
@@ -982,6 +984,297 @@ namespace EbxToXmlPlugin
                     });
 
                     FrostyMessageBox.Show("Successfully exported Hashes List to " + sfd.FileName, "Frosty Editor");
+                }
+            });
+        }
+
+        public class ExportAllSoundWavesMenuExtension : MenuExtension
+        {
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/EbxToXmlPlugin;component/Images/EbxToXml.png") as ImageSource;
+
+            public override string TopLevelMenuName => TopLevel;
+            public override string SubLevelMenuName => SubLevel;
+
+            public override string MenuItemName => "Export all audio as wavs";
+
+            public List<SoundDataTrack> LoadTracks(EbxAssetEntry refEntry, FrostyTaskWindow task = null)
+            {
+                List<SoundDataTrack> retVal = new List<SoundDataTrack>();
+                dynamic soundWave = App.AssetManager.GetEbx(refEntry).RootObject;
+
+
+
+                List<int> allowedVariations = null;
+                if (soundWave.Localization.Count > 0)
+                {
+                    allowedVariations = new List<int>();
+                    foreach (dynamic localization in soundWave.Localization)
+                    {
+                        PointerRef pr = localization.Language;
+                        EbxAsset asset = App.AssetManager.GetEbx(App.AssetManager.GetEbxEntry(pr.External.FileGuid));
+                        dynamic obj = asset.GetObject(pr.External.ClassGuid);
+
+                        if (obj.__Id == "English")
+                        {
+                            for (int i = 0; i < localization.VariationCount; i++)
+                                allowedVariations.Add(i + localization.FirstVariationIndex);
+                        }
+                    }
+                }
+
+                int index = 0;
+                int totalCount = soundWave.RuntimeVariations.Count;
+                foreach (dynamic runtimeVariation in soundWave.RuntimeVariations)
+                {
+                    if (!(allowedVariations == null || allowedVariations.Contains(index)))
+                    {
+                        index++;
+                        continue;
+                    }
+                    if (task != null)
+                        task.Update(status: "Loading track #" + (index + 1), progress: ((index + 1) / (double)totalCount) * 100.0d);
+
+                    SoundDataTrack track = new SoundDataTrack { Name = "Track #" + ((index++) + 1) };
+
+                    dynamic soundDataChunk = soundWave.Chunks[runtimeVariation.ChunkIndex];
+                    ChunkAssetEntry chunkEntry = App.AssetManager.GetChunkEntry(soundDataChunk.ChunkId);
+
+                    using (NativeReader reader = new NativeReader(App.AssetManager.GetChunk(chunkEntry)))
+                    {
+                        List<short> decodedSoundBuf = new List<short>();
+                        double startLoopingTime = 0.0;
+                        double loopingDuration = 0.0;
+
+                        for (int i = 0; i < runtimeVariation.SegmentCount; i++)
+                        {
+                            var segment = soundWave.Segments[runtimeVariation.FirstSegmentIndex + i];
+                            reader.Position = segment.SamplesOffset;
+
+                            uint headerSize = reader.ReadUInt(Endian.Big) & 0x00ffffff;
+                            byte codec = reader.ReadByte();
+                            int channels = (reader.ReadByte() >> 2) + 1;
+                            ushort sampleRate = reader.ReadUShort(Endian.Big);
+                            uint sampleCount = reader.ReadUInt(Endian.Big) & 0x00ffffff;
+
+                            switch (codec)
+                            {
+                                case 0x12: track.Codec = "Pcm16Big"; break;
+                                case 0x14: track.Codec = "Xas1"; break;
+                                case 0x15: track.Codec = "EaLayer31"; break;
+                                case 0x16: track.Codec = "EaLayer32Pcm"; break;
+                                default: track.Codec = "Unknown (" + codec.ToString("x2") + ")"; break;
+                            }
+
+                            reader.Position = segment.SamplesOffset;
+                            long size = reader.Length - reader.Position;
+                            if ((runtimeVariation.FirstSegmentIndex + i + 1 < soundWave.Segments.Count) && ((soundWave.Segments[runtimeVariation.FirstSegmentIndex + i + 1].SamplesOffset > segment.SamplesOffset)))
+                            {
+                                size = soundWave.Segments[runtimeVariation.FirstSegmentIndex + i + 1].SamplesOffset - reader.Position;
+                            }
+                            byte[] soundBuf = reader.ReadBytes((int)size);
+                            double duration = 0.0;
+
+                            if (codec == 0x12)
+                            {
+                                short[] data = Pcm16b.Decode(soundBuf);
+                                decodedSoundBuf.AddRange(data);
+                                duration += (data.Length / channels) / (double)sampleRate;
+                                sampleCount = (uint)data.Length;
+                            }
+                            else if (codec == 0x14)
+                            {
+                                short[] data = XAS.Decode(soundBuf);
+                                decodedSoundBuf.AddRange(data);
+                                duration += (data.Length / channels) / (double)sampleRate;
+                                sampleCount = (uint)data.Length;
+                            }
+                            else if (codec == 0x15 || codec == 0x16)
+                            {
+                                sampleCount = 0;
+                                EALayer3.Decode(soundBuf, soundBuf.Length, (short[] data, int count, EALayer3.StreamInfo info) =>
+                                {
+                                    if (info.streamIndex == -1)
+                                        return;
+                                    sampleCount += (uint)data.Length;
+                                    decodedSoundBuf.AddRange(data);
+                                });
+                                duration += (sampleCount / channels) / (double)sampleRate;
+                            }
+
+                            if (runtimeVariation.SegmentCount > 1)
+                            {
+                                if (i < runtimeVariation.FirstLoopSegmentIndex)
+                                {
+                                    startLoopingTime += duration;
+                                    track.LoopStart += sampleCount;
+                                }
+                                if (i >= runtimeVariation.FirstLoopSegmentIndex && i <= runtimeVariation.LastLoopSegmentIndex)
+                                {
+                                    loopingDuration += duration;
+                                    track.LoopEnd += sampleCount;
+                                }
+                            }
+
+                            track.SampleRate = sampleRate;
+                            track.ChannelCount = channels;
+                            track.Duration += duration;
+                        }
+
+                        track.LoopEnd += track.LoopStart;
+                        track.Samples = decodedSoundBuf.ToArray();
+
+                        var maxPeakProvider = new MaxPeakProvider();
+                        var rmsPeakProvider = new RmsPeakProvider(200); // e.g. 200
+                        var samplingPeakProvider = new SamplingPeakProvider(200); // e.g. 200
+                        var averagePeakProvider = new AveragePeakProvider(4); // e.g. 4
+
+                        var topSpacerColor = System.Drawing.Color.FromArgb(64, 83, 22, 3);
+                        var soundCloudOrangeTransparentBlocks = new SoundCloudBlockWaveFormSettings(System.Drawing.Color.FromArgb(196, 197, 53, 0), topSpacerColor, System.Drawing.Color.FromArgb(196, 79, 26, 0),
+                                                                                                    System.Drawing.Color.FromArgb(64, 79, 79, 79))
+                        {
+                            Name = "SoundCloud Orange Transparent Blocks",
+                            PixelsPerPeak = 2,
+                            SpacerPixels = 1,
+                            TopSpacerGradientStartColor = topSpacerColor,
+                            BackgroundColor = System.Drawing.Color.Transparent,
+                            Width = 800,
+                            TopHeight = 50,
+                            BottomHeight = 30,
+                        };
+
+                        try
+                        {
+                            var renderer = new WaveFormRenderer();
+                            var image = renderer.Render(track.Samples, maxPeakProvider, soundCloudOrangeTransparentBlocks);
+
+                            using (var ms = new MemoryStream())
+                            {
+                                image.Save(ms, ImageFormat.Png);
+                                ms.Seek(0, SeekOrigin.Begin);
+
+                                var bitmapImage = new BitmapImage();
+                                bitmapImage.BeginInit();
+                                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                                bitmapImage.StreamSource = ms;
+                                bitmapImage.EndInit();
+
+                                var target = new RenderTargetBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight, bitmapImage.DpiX, bitmapImage.DpiY, PixelFormats.Pbgra32);
+                                var visual = new DrawingVisual();
+
+                                using (var r = visual.RenderOpen())
+                                {
+                                    visual.SetValue(RenderOptions.EdgeModeProperty, EdgeMode.Aliased);
+                                    r.DrawImage(bitmapImage, new Rect(0, 0, bitmapImage.Width, bitmapImage.Height));
+
+                                    if (loopingDuration > 0)
+                                    {
+                                        r.DrawLine(new Pen(Brushes.White, 1.0),
+                                            new Point((int)((startLoopingTime / track.Duration) * soundCloudOrangeTransparentBlocks.Width), soundCloudOrangeTransparentBlocks.TopHeight),
+                                            new Point((int)((startLoopingTime / track.Duration) * soundCloudOrangeTransparentBlocks.Width), (int)bitmapImage.Height));
+                                        r.DrawLine(new Pen(Brushes.White, 1.0),
+                                            new Point((int)(((startLoopingTime + loopingDuration) / track.Duration) * soundCloudOrangeTransparentBlocks.Width), soundCloudOrangeTransparentBlocks.TopHeight),
+                                            new Point((int)(((startLoopingTime + loopingDuration) / track.Duration) * soundCloudOrangeTransparentBlocks.Width), (int)bitmapImage.Height));
+                                        r.DrawLine(new Pen(Brushes.White, 1.0),
+                                            new Point((int)((startLoopingTime / track.Duration) * soundCloudOrangeTransparentBlocks.Width), (int)bitmapImage.Height),
+                                            new Point((int)(((startLoopingTime + loopingDuration) / track.Duration) * soundCloudOrangeTransparentBlocks.Width), (int)bitmapImage.Height));
+                                    }
+                                }
+
+                                target.Render(visual);
+                                target.Freeze();
+                                track.WaveForm = target;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                        }
+
+                        track.SegmentCount = runtimeVariation.SegmentCount;
+                    }
+
+                    retVal.Add(track);
+                }
+
+                //foreach (dynamic localization in soundWave.Localization)
+                //{
+                //    for (int i = 0; i < localization.VariationCount; i++)
+                //    {
+                //        SoundDataTrack track = retVal[i + localization.FirstVariationIndex];
+
+                //        PointerRef pr = localization.Language;
+                //        EbxAsset asset = App.AssetManager.GetEbx(App.AssetManager.GetEbxEntry(pr.External.FileGuid));
+                //        dynamic obj = asset.GetObject(pr.External.ClassGuid);
+
+                //        track.Language = obj.__Id;
+                //    }
+                //}
+
+                return retVal;
+            }
+
+            public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
+            {
+                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+                dialog.InitialDirectory = System.AppDomain.CurrentDomain.BaseDirectory;
+                dialog.IsFolderPicker = true;
+                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    string outDir = dialog.FileName;
+                    FrostyTaskWindow.Show("Exporting EBX", "", (task) =>
+                    {
+                        uint totalCount = (uint)App.AssetManager.EnumerateEbx(type: "SoundWaveAsset").Where(refEntry => refEntry.Name.Contains("VO/")).ToList().Count;
+                        uint idx = 0;
+                        foreach (EbxAssetEntry refEntry in App.AssetManager.EnumerateEbx(type: "SoundWaveAsset").Where(refEntry => refEntry.Name.Contains("VO/")).ToList())
+                        {
+                            string fullPath = outDir + "/" + refEntry.Path + "/"; ;
+                            task.Update(refEntry.Name, (idx++ / (double)totalCount) * 100.0d);
+                            DirectoryInfo di = new DirectoryInfo(fullPath);
+                            if (!di.Exists)
+                                Directory.CreateDirectory(di.FullName);
+                            try
+                            {
+                                int soundVariationIndex = 0;
+
+                                List<SoundDataTrack> tracks = LoadTracks(refEntry);
+
+                                foreach (SoundDataTrack engTrack in tracks)
+                                {
+                                    string shortName = refEntry.Filename + ".wav";
+                                    if (tracks.Count > 1)
+                                        shortName = refEntry.Filename + "_var_" + soundVariationIndex++.ToString().PadLeft((int)Math.Floor(Math.Log10(tracks.Count - 1) + 1), '0') + ".wav";
+                                    SoundEditorPlugin.WAV.WAVFormatChunk fmt = new SoundEditorPlugin.WAV.WAVFormatChunk(SoundEditorPlugin.WAV.WAVFormatChunk.DataFormats.WAVE_FORMAT_PCM, (ushort)engTrack.ChannelCount, (uint)engTrack.SampleRate, (uint)(engTrack.ChannelCount * 2 * engTrack.SampleRate), (ushort)(2 * engTrack.ChannelCount), 16);
+                                    List<SoundEditorPlugin.WAV.WAVDataFrame> frames = new List<SoundEditorPlugin.WAV.WAVDataFrame>();
+
+                                    for (int i = 0; i < engTrack.Samples.Length / engTrack.ChannelCount; i++)
+                                    {
+                                        // write frame
+                                        SoundEditorPlugin.WAV.WAV16BitDataFrame frame = new SoundEditorPlugin.WAV.WAV16BitDataFrame((ushort)engTrack.ChannelCount);
+                                        for (int channel = 0; channel < engTrack.ChannelCount; channel++)
+                                        {
+                                            frame.Data[channel] = engTrack.Samples[i * engTrack.ChannelCount + channel];
+                                        }
+                                        frames.Add(frame);
+                                    }
+
+                                    SoundEditorPlugin.WAV.WAVDataChunk data = new SoundEditorPlugin.WAV.WAVDataChunk(fmt, frames);
+                                    SoundEditorPlugin.WAV.RIFFMainChunk main = new SoundEditorPlugin.WAV.RIFFMainChunk(new SoundEditorPlugin.WAV.RIFFChunkHeader(0, new byte[] { 0x52, 0x49, 0x46, 0x46 }, 0), new byte[] { 0x57, 0x41, 0x56, 0x45 });
+
+                                    using (FileStream stream = new FileStream(fullPath + shortName, FileMode.Create))
+                                    using (BinaryWriter writer = new BinaryWriter(stream))
+                                    {
+                                        main.Write(writer, new List<SoundEditorPlugin.WAV.IRIFFChunk>(new SoundEditorPlugin.WAV.IRIFFChunk[] { fmt, data }));
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                App.Logger.Log("Failed to export {0}", refEntry.Filename);
+                            }
+                        }
+
+                    });
+
+                    FrostyMessageBox.Show("Successfully exported sounds to " + outDir, "Frosty Editor");
                 }
             });
         }

@@ -21,7 +21,7 @@ using System.Windows;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("4b612468-9b6a-4304-88a5-055c3575eb3d")]
 
-[assembly: PluginDisplayName("Bulk Export Plugin")]
+[assembly: PluginDisplayName("Bulk Export/Import Plugin")]
 [assembly: PluginAuthor("GalaxyMan2015 & Mophead")]
 [assembly: PluginVersion("1.0.0.0")]
 
@@ -35,4 +35,6 @@ using System.Windows;
 [assembly: RegisterMenuExtension(typeof(BulkExporting.StatEventToCSVMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ObjectTypeMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ClassPortsMenuExtension))]
+[assembly: RegisterMenuExtension(typeof(BulkExporting.ExportAllSoundWavesMenuExtension))]
+
 

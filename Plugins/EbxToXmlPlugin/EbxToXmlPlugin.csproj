@@ -54,6 +54,7 @@
     <ProjectReference Include="..\..\FrostySdk\FrostySdk.csproj">
       <Private>false</Private>
     </ProjectReference>
+    <ProjectReference Include="..\SoundEditorPlugin\SoundEditorPlugin.csproj" />
   </ItemGroup>
   
   <ItemGroup>
@@ -62,6 +63,9 @@
     </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack.Shell">
       <HintPath>..\..\FrostyEditor\ThirdParty\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WaveFormRenderer">
+      <HintPath>..\..\FrostyEditor\ThirdParty\NAudio.WaveFormRenderer.dll</HintPath>
     </Reference>
   </ItemGroup>
   
