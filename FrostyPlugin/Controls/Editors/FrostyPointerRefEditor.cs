@@ -441,23 +441,26 @@ namespace Frosty.Core.Controls.Editors
 
             List<PointerRefClassType> types = new List<PointerRefClassType>();
 
-            foreach (dynamic obj in GetParentEditor().Objects)
+            if (GetParentEditor() != null)
             {
-                if (TypeLibrary.IsSubClassOf((object)obj, baseType.Name))
+                foreach (dynamic obj in GetParentEditor().Objects)
                 {
-                    assignObjs.Add(obj);
-                    AssetClassGuid guid = obj.GetInstanceGuid();
-
-                    types.Add(new PointerRefClassType()
+                    if (TypeLibrary.IsSubClassOf((object)obj, baseType.Name))
                     {
-                        Name = obj.__Id,
-                        Type = obj.GetType(),
-                        Guid = guid.ExportedGuid,
-                        Id = (uint)guid.InternalId,
-                        Index = assignObjs.Count - 1,
-                        HasCustomTransientId = obj.__Id != obj.GetType().Name,
-                        TypeOverrideName = App.PluginManager.GetPointerRefIdOverride(obj, 100)
-                    });
+                        assignObjs.Add(obj);
+                        AssetClassGuid guid = obj.GetInstanceGuid();
+
+                        types.Add(new PointerRefClassType()
+                        {
+                            Name = obj.__Id,
+                            Type = obj.GetType(),
+                            Guid = guid.ExportedGuid,
+                            Id = (uint)guid.InternalId,
+                            Index = assignObjs.Count - 1,
+                            HasCustomTransientId = obj.__Id != obj.GetType().Name,
+                            TypeOverrideName = App.PluginManager.GetPointerRefIdOverride(obj, 100)
+                        });
+                    }
                 }
             }
 
@@ -508,10 +511,13 @@ namespace Frosty.Core.Controls.Editors
             }
 
             // selected asset is the same as the editing one
-            EbxAssetEntry currentAsset = GetParentEditor().AssetEntry as EbxAssetEntry;
-            isInternal = selectedAsset == currentAsset;
-            if (isInternal)
-                return;
+            if (GetParentEditor() != null)
+            {
+                EbxAssetEntry currentAsset = GetParentEditor().AssetEntry as EbxAssetEntry;
+                isInternal = selectedAsset == currentAsset;
+                if (isInternal)
+                    return;
+            }
 
             EbxAsset asset = App.AssetManager.GetEbx(selectedAsset);
             assignFileGuid = asset.FileGuid;
@@ -556,7 +562,9 @@ namespace Frosty.Core.Controls.Editors
                     FileGuid = assignFileGuid,
                     ClassGuid = guid.ExportedGuid
                 };
-                GetParentEditor().AddDependentObject(reference.FileGuid);
+                if (GetParentEditor() != null)
+                    GetParentEditor().AddDependentObject(reference.FileGuid);
+
                 Value = new PointerRef(reference);
             }
             else
@@ -603,7 +611,9 @@ namespace Frosty.Core.Controls.Editors
             {
                 EbxAssetEntry entry = App.AssetManager.GetEbxEntry(pointerRef.External.FileGuid);
                 FrostyAssetEditor editor = GetParentEditor();
-                EbxAsset asset = editor.GetDependentObject(pointerRef.External.FileGuid);
+                EbxAsset asset = null;
+                if (editor != null)
+                    asset = editor.GetDependentObject(pointerRef.External.FileGuid);
 
                 if (entry != null)
                 {
@@ -656,9 +666,12 @@ namespace Frosty.Core.Controls.Editors
             }
             else if (pointerRef.Type == PointerRefType.Internal)
             {
-                EbxAssetEntry currentAsset = GetParentEditor().AssetEntry as EbxAssetEntry;
+                if (GetParentEditor() != null)
+                {
+                    EbxAssetEntry currentAsset = GetParentEditor().AssetEntry as EbxAssetEntry;
+                    path = currentAsset.Name;
+                }
                 value = pointerRef.Internal;
-                path = currentAsset.Name;
                 type = pointerRef.Internal.GetType().Name;
             }
 

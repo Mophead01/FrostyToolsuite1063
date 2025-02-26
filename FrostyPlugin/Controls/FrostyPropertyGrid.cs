@@ -663,6 +663,13 @@ namespace Frosty.Core.Controls
             return true;
         }
         List<string> connections = new List<string>() { "PropertyConnection", "EventConnection", "LinkConnection" };
+        public void ExpandOrCollapseAll(bool expand)
+        {
+            foreach (var item in Children)
+                if (!item.IsHidden)
+                    item.ExpandOrCollapseAll(expand);
+            IsExpanded = expand;
+        }
 
         public bool FilterGuid(string guid, List<object> refObjects, bool doNotHideSubObjects = false)
         {
@@ -1932,6 +1939,24 @@ namespace Frosty.Core.Controls
             {
                 List<object> refObjects = new List<object>();
 
+                bool expandLater = false;
+                if (filterText.StartsWith(">>>"))
+                {
+                    expandLater = true;
+                    if (filterText.Length > 3)
+                        filterText = filterText.Substring(3);
+                }
+                else if (filterText.StartsWith("<<<"))
+                {
+                    foreach (var item in items)
+                    {
+                        item.ExpandOrCollapseAll(false);
+                        item.IsExpanded = true;
+                    }
+                    if (filterText.Length > 3)
+                        filterText = filterText.Substring(3);
+                }
+
                 Guid outGuid;
                 if (filterText.Length == 36 && Guid.TryParse(filterText, out outGuid))
                 {
@@ -1985,6 +2010,13 @@ namespace Frosty.Core.Controls
                     {
                         if (item.FilterPropertyName(filterText, refObjects))
                             item.IsHidden = true;
+                    }
+                }
+                if (expandLater)
+                {
+                    foreach (var item in items)
+                    {
+                        item.ExpandOrCollapseAll(true);
                     }
                 }
             });
