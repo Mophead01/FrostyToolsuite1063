@@ -155,7 +155,7 @@ namespace BiowareLocalizationPlugin.LocalizedResources
 
                 if(!textArray.SequenceEqual(text.EncodedText.Value))
                 {
-                    //App.Logger.Log("Text with id <{0}> does not match in position!", entry.Key.ToString("X8"));
+                    App.Logger.Log("Text with id <{0}> does not match in position!", entry.Key.ToString("X8"));
                     missMatches++;
                 }
             }

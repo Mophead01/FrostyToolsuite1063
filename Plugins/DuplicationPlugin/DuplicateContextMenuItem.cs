@@ -28,6 +28,28 @@ namespace DuplicationPlugin
     {
         #region --Extensions--
 
+        public class VisualUnlockRootAssetTempExtension : DuplicateAssetExtension
+        {
+            public override string AssetType => "VisualUnlockRootAsset";
+
+            public override EbxAssetEntry DuplicateAsset(EbxAssetEntry entry, string newName, bool createNew, Type newType)
+            {
+                EbxAssetEntry refEntry = base.DuplicateAsset(entry, newName, createNew, newType);
+
+                EbxAsset refAsset = App.AssetManager.GetEbx(refEntry);
+                dynamic refRoot = refAsset.RootObject;
+
+                for (int i = 0; i < refRoot.SkinInfos.Count; i++)
+                {
+                    refRoot.SkinInfos[i].SkinGuid = new Guid($"00000000-0000-0000-1234-{i.ToString().PadLeft(12,'0')}");
+                }
+                //refRoot.SelectSkinMethod = Enum.Parse(typeof(refRoot.SelectSkinMethod), newValue);
+                App.AssetManager.ModifyEbx(refEntry.Name, refAsset);
+
+                return refEntry;
+            }
+        }
+
         public class SoundWaveExtension : DuplicateAssetExtension
         {
             public override string AssetType => "SoundWaveAsset";
@@ -577,6 +599,7 @@ namespace DuplicationPlugin
 
         public class DuplicateAssetExtension
         {
+            private Random rand = new Random();
             public virtual string AssetType => null;
 
             public virtual EbxAssetEntry DuplicateAsset(EbxAssetEntry entry, string newName, bool createNew, Type newType)
@@ -610,6 +633,19 @@ namespace DuplicationPlugin
                 else
                     guid = new AssetClassGuid(Utils.GenerateDeterministicGuid(newAsset.Objects, (Type)obj.GetType(), newAsset.FileGuid), -1);
                 obj.SetInstanceGuid(guid);
+
+                foreach (PropertyInfo pi in obj.GetType().GetProperties())
+                {
+                    switch(pi.Name.ToLower())
+                    {
+                        case "identifier":
+                            pi.SetValue(obj, (uint)rand.Next(int.MinValue, int.MaxValue));
+                            break;
+                        case "debugunlockid":
+                            pi.SetValue(obj, new CString(newName.Split('/').Last()));
+                            break;
+                    }
+                }
 
                 EbxAssetEntry newEntry = App.AssetManager.AddEbx(newName, newAsset);
 

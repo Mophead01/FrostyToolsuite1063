@@ -75,6 +75,15 @@ namespace Frosty::Hash
 	// CityHash
 	//
 
+	unsigned int CityHash::Hash32(array<Byte>^ data)
+	{
+		if (data->Length == 0)
+			return 0;
+		pin_ptr<Byte> ptr = &data[0];
+		return CityHash32((const char*)ptr, data->Length);
+	}
+
+
 	unsigned long long CityHash::Hash64(array<Byte>^ data)
 	{
 		if (data->Length == 0)
@@ -83,13 +92,13 @@ namespace Frosty::Hash
 		return CityHash64((const char*)ptr, data->Length);
 	}
 
-	/*unsigned long long CityHash::HashWithSeed64(array<Byte>^ data, unsigned long long seed)
+	unsigned long long CityHash::HashWithSeed64(array<Byte>^ data, unsigned long long seed)
 	{
 		if (data->Length == 0)
 			return 0;
 		pin_ptr<Byte> ptr = &data[0];
 		return CityHash64WithSeed((const char*)ptr, data->Length, seed);
-	}*/
+	}
 
 	//
 	// Murmur2

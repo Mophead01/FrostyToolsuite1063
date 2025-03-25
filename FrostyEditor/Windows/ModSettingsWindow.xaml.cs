@@ -27,6 +27,11 @@ namespace FrostyEditor.Windows
             "Map",
             "User Interface"
         };
+        private List<string> hasherOptions = new List<string>()
+        {
+            "Disabled",
+            "Hash Added Assets",
+        };
 
         public ModSettingsWindow(FrostyProject inProject = null)
         {
@@ -39,7 +44,9 @@ namespace FrostyEditor.Windows
         private void ModSettingsWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             modCategoryComboBox.ItemsSource = categories;
-            
+            hashAddedFilesComboBox.ItemsSource = hasherOptions;
+            hashAddedFilesComboBox.SelectedIndex = 1;
+
             modTitleTextBox.Text = ModSettings.Title;
             modAuthorTextBox.Text = ModSettings.Author;
             modCategoryComboBox.SelectedIndex = ModSettings.SelectedCategory;
@@ -93,6 +100,7 @@ namespace FrostyEditor.Windows
             ModSettings.Version = modVersionTextBox.Text;
             ModSettings.Description = modDescriptionTextBox.Text;
             ModSettings.Link = modPageLinkTextBox.Text;
+            ModSettings.HashAddedAssets = hashAddedFilesComboBox.SelectedIndex == 1;
             ModSettings.Icon = iconImageButton.GetImage();
             ModSettings.SetScreenshot(0, ssImageButton1.GetImage());
             ModSettings.SetScreenshot(1, ssImageButton2.GetImage());

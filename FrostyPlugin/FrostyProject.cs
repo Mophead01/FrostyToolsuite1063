@@ -494,7 +494,8 @@ namespace Frosty.Core
                     foreach (FileInfo file in di.EnumerateFiles())
                         file.Delete();
                     foreach (DirectoryInfo dir in di.GetDirectories())
-                        dir.Delete(true);
+                        if (Directory.Exists(dir.FullName))
+                            Directory.Delete(dir.FullName, true);
 
                     //Directory.Delete(folderName);
                     //Directory.CreateDirectory(folderName);

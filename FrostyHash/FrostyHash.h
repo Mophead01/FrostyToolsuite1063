@@ -27,8 +27,9 @@ namespace Frosty::Hash
 	public ref class CityHash
 	{
 	public:
+		static unsigned int Hash32(array<Byte>^ data);
 		static unsigned long long Hash64(array<Byte>^ data);
-		//static unsigned long long HashWithSeed64(array<Byte>^ data, unsigned long long seed);
+		static unsigned long long HashWithSeed64(array<Byte>^ data, unsigned long long seed);
 	};
 
 	public ref class Murmur2

@@ -51,12 +51,12 @@ namespace FsLocalizationPlugin
                     {
                         string PreviousString = db.GetString(result);
                         db.SetString(result, varValueTextBox.Text);
-                        //App.Logger.Log(string.Format("Replaced Value of String Hash: 0x{0}, with Value: \"{1}\", Previously: \"{2}\".", HashOrID, varValueTextBox.Text, PreviousString));
+                        App.Logger.Log(string.Format("Replaced Value of String Hash: 0x{0}, with Value: \"{1}\", Previously: \"{2}\".", HashOrID, varValueTextBox.Text, PreviousString));
                     }
                     else
                     {
                         db.SetString(result, varValueTextBox.Text);
-                        //App.Logger.Log(string.Format("Added String Hash: 0x{0}, with Value: \"{1}\".", HashOrID, varValueTextBox.Text));
+                        App.Logger.Log(string.Format("Added String Hash: 0x{0}, with Value: \"{1}\".", HashOrID, varValueTextBox.Text));
                     }
                 }
                 catch
@@ -71,12 +71,12 @@ namespace FsLocalizationPlugin
                 {
                     string PreviousString = db.GetString(result);
                     db.SetString(result, varValueTextBox.Text);
-                    //App.Logger.Log(string.Format("Replaced Value of String ID: \"{3}\", Hash: 0x{0}, with Value: \"{1}\", Previously: \"{2}\".", result.ToString("X8"), varValueTextBox.Text, PreviousString, HashOrID));
+                    App.Logger.Log(string.Format("Replaced Value of String ID: \"{3}\", Hash: 0x{0}, with Value: \"{1}\", Previously: \"{2}\".", result.ToString("X8"), varValueTextBox.Text, PreviousString, HashOrID));
                 }
                 else
                 {
                     db.SetString(result, varValueTextBox.Text);
-                    //App.Logger.Log(string.Format("Added String ID: \"{2}\", Hash: 0x{0}, with Value: \"{1}\".", result.ToString("X8"), varValueTextBox.Text, HashOrID));
+                    App.Logger.Log(string.Format("Added String ID: \"{2}\", Hash: 0x{0}, with Value: \"{1}\".", result.ToString("X8"), varValueTextBox.Text, HashOrID));
                 }
             }
 

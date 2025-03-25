@@ -1,8 +1,12 @@
-﻿using Frosty.Core.Controls;
+﻿using Frosty.Core.Attributes;
+using Frosty.Core.Controls;
+using Frosty.Core.Mod;
 using Frosty.Core.Windows;
 using FrostyEditor.Windows;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Input;
 
@@ -36,6 +40,14 @@ namespace FrostyEditor.Commands
 
                     // setup ability to cancel the process
                     CancellationTokenSource cancelToken = new CancellationTokenSource();
+                    List<ExportActionOverride> actions = App.PluginManager.GetExportActionOverrides().Where(lst => !new List<ExportType> { ExportType.All, ExportType.LaunchOnly }.Contains(lst.Item2)).Select(lst => lst.Item3).ToList();
+
+                    FrostyTaskWindow.Show("Preparing", "", (task) =>
+                    {
+                        foreach (ExportActionOverride exportAction in actions)
+                            exportAction.PreExport(task, ExportType.ExportOnly, filename, new List<string>());
+                    });
+
 
                     FrostyTaskWindow.Show("Saving Mod", "", (task) =>
                     {
@@ -54,6 +66,12 @@ namespace FrostyEditor.Commands
                             }
                         }
                     }, showCancelButton: true, cancelCallback: (task) => cancelToken.Cancel());
+
+                    FrostyTaskWindow.Show("Completing", "", (task) =>
+                    {
+                        foreach (ExportActionOverride exportAction in actions)
+                            exportAction.PostExport(task, ExportType.ExportOnly, filename, new List<string>());
+                    });
                 }
             }
         }

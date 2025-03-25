@@ -97,6 +97,16 @@ namespace Frosty.Core.Mod
                 isDirty = true;
             }
         }
+        public bool HashAddedAssets {
+            get => hashAddedFiles;
+            set {
+                if (!title.Equals(value))
+                {
+                    hashAddedFiles = value;
+                    isDirty = true;
+                }
+            }
+        }
 
         private string title = "";
         private string author = "";
@@ -105,6 +115,7 @@ namespace Frosty.Core.Mod
         private string version = "";
         private string description = "";
         private string link = "";
+        private bool hashAddedFiles = false;
 
         private byte[] iconData = null;
         private byte[][] screenshotData = null;

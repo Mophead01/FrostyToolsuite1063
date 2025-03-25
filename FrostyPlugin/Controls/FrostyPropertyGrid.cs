@@ -663,11 +663,11 @@ namespace Frosty.Core.Controls
             return true;
         }
         List<string> connections = new List<string>() { "PropertyConnection", "EventConnection", "LinkConnection" };
-        public void ExpandOrCollapseAll(bool expand)
+        public void ExpandOrCollapseAll(bool expand, int expandCount = -1)
         {
             foreach (var item in Children)
-                if (!item.IsHidden)
-                    item.ExpandOrCollapseAll(expand);
+                if (!item.IsHidden && expandCount == -1 || expandCount > 0)
+                    item.ExpandOrCollapseAll(expand, expandCount - 1);
             IsExpanded = expand;
         }
 
@@ -1925,9 +1925,9 @@ namespace Frosty.Core.Controls
         }
 
         public async void FilterTextInBox()
-        {            
+        {
             string filterText = filterBox.Text;
-            if (filterText == FilterText)
+            if (filterText == FilterText || items == null)
                 return;
 
             filterBox.IsEnabled = false;
@@ -2028,6 +2028,17 @@ namespace Frosty.Core.Controls
             filterInProgressBorder.Visibility = Visibility.Collapsed;
 
             GC.Collect();
+        }
+
+        public async void ExpandRows(int expandCount)
+        {
+            foreach (var item in items)
+            {
+                item.ExpandOrCollapseAll(true, expandCount);
+            }
+
+            GC.Collect();
+
         }
 
         private void FilterBox_KeyUp(object sender, KeyEventArgs e)

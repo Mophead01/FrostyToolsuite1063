@@ -359,7 +359,10 @@ namespace ChunkResEditorPlugin
                     using (NativeWriter writer = new NativeWriter(new FileStream(sfd.FileName, FileMode.Create)))
                     {
                         // write res meta first
-                        writer.Write(selectedAsset.ResMeta);
+                        if (selectedAsset.HasModifiedData)
+                            writer.Write(selectedAsset.ModifiedEntry.ResMeta);
+                        else
+                            writer.Write(selectedAsset.ResMeta);
 
                         // followed by remaining data
                         using (NativeReader reader = new NativeReader(resStream))
