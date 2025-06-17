@@ -12,6 +12,7 @@ using FrostySdk.Resources;
 using MeshSetPlugin.Resources;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -97,6 +98,62 @@ namespace DuplicationPlugin
                 App.AssetManager.ModifyEbx(refEntry.Name, refAsset);
 
                 return refEntry;
+            }
+        }
+
+        public class VehicleBlueprintExtension : DuplicateAssetExtension
+        {
+            public override string AssetType => "VehicleBlueprint";
+            public override EbxAssetEntry DuplicateAsset(EbxAssetEntry entry, string newName, bool createNew, Type newType)
+            {
+                EbxAssetEntry parEntry = base.DuplicateAsset(entry, newName, createNew, newType);
+                EbxAsset parAsset = App.AssetManager.GetEbx(parEntry);
+                dynamic parRoot = parAsset.RootObject;
+
+                Dictionary<Guid, Guid> oldToNewGuids = new Dictionary<Guid, Guid>();
+
+                foreach(Guid layerRefGuid in parEntry.EnumerateDependencies())
+                {
+                    EbxAssetEntry layerRefEntry = App.AssetManager.GetEbxEntry(layerRefGuid);
+                    if (layerRefEntry == null || layerRefEntry.Type != "LayerData")
+                        continue;
+                    if (!layerRefEntry.Name.StartsWith(entry.Name))
+                    {
+                        App.Logger.LogError($"Could not duplicate dependency {layerRefEntry.Name}");
+                        continue;
+                    }
+                    string layerRefNewName = layerRefEntry.Name.Replace(entry.Name, newName);
+                    EbxAssetEntry  newLayerRefEntry = base.DuplicateAsset(layerRefEntry, layerRefNewName, false, null);
+                    oldToNewGuids.Add(layerRefEntry.Guid, newLayerRefEntry.Guid);
+                    parAsset.AddDependency(newLayerRefEntry.Guid);
+                }
+                void ReplaceConnection(dynamic con)
+                {
+                    if (oldToNewGuids.ContainsKey(con.Source.External.FileGuid))
+                        con.Source = new PointerRef(new EbxImportReference() { FileGuid = oldToNewGuids[con.Source.External.FileGuid], ClassGuid = con.Source.External.ClassGuid });
+                    if (oldToNewGuids.ContainsKey(con.Target.External.FileGuid))
+                        con.Target = new PointerRef(new EbxImportReference() { FileGuid = oldToNewGuids[con.Target.External.FileGuid], ClassGuid = con.Target.External.ClassGuid });
+                }
+                foreach (dynamic propCon in parRoot.PropertyConnections)
+                    ReplaceConnection(propCon);
+                foreach (dynamic propCon in parRoot.EventConnections)
+                    ReplaceConnection(propCon);
+                foreach (dynamic propCon in parRoot.LinkConnections)
+                    ReplaceConnection(propCon);
+                foreach(dynamic obj in parRoot.Objects)
+                {
+                    if (obj.Internal != null & obj.Internal.GetType().Name == "LayerReferenceObjectData")
+                    {
+                        if (oldToNewGuids.ContainsKey(obj.Internal.Blueprint.External.FileGuid))
+                            obj.Internal.Blueprint = new PointerRef(new EbxImportReference() { FileGuid = oldToNewGuids[obj.Internal.Blueprint.External.FileGuid], ClassGuid = App.AssetManager.GetEbx(oldToNewGuids[obj.Internal.Blueprint.External.FileGuid]).RootInstanceGuid });
+                    }
+                }
+
+                // DONT FORGET TO UPDATE THE NAME ON THE OBJECT THING
+
+                parAsset.Update();
+                App.AssetManager.ModifyEbx(parEntry.Name, parAsset);
+                return parEntry;
             }
         }
 

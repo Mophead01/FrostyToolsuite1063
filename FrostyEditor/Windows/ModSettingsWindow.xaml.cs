@@ -45,13 +45,13 @@ namespace FrostyEditor.Windows
         {
             modCategoryComboBox.ItemsSource = categories;
             hashAddedFilesComboBox.ItemsSource = hasherOptions;
-            hashAddedFilesComboBox.SelectedIndex = 1;
 
             modTitleTextBox.Text = ModSettings.Title;
             modAuthorTextBox.Text = ModSettings.Author;
             modCategoryComboBox.SelectedIndex = ModSettings.SelectedCategory;
             modVersionTextBox.Text = ModSettings.Version;
             modDescriptionTextBox.Text = ModSettings.Description;
+            hashAddedFilesComboBox.SelectedIndex = ModSettings.Title.Contains("Instant Online Improvements") ? 1 : 0;
 
             if (modCategoryComboBox.SelectedItem.ToString() == "Custom")
             {

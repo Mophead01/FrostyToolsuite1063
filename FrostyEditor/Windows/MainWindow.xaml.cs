@@ -678,9 +678,9 @@ namespace FrostyEditor
             FrostyMessageBox.Show("This feature is currently unimplemented", "Frosty Editor");
         }
 
-        public void ExportMod(ModSettings modSettings, string filename, bool bSilent, CancellationToken cancelToken)
+        public void ExportMod(ModSettings modSettings, string filename, bool bSilent, CancellationToken cancelToken, bool hashAdded = false)
         {
-            m_project.WriteToMod(filename, modSettings, bSilent, cancelToken);
+            m_project.WriteToMod(filename, modSettings, bSilent, cancelToken, hashAdded);
             if (!bSilent)
                 App.Logger.Log("Mod saved to {0}", filename);
         }

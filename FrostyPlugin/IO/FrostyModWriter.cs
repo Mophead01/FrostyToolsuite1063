@@ -7,6 +7,7 @@ using FrostySdk.Managers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace Frosty.Core.IO
@@ -251,8 +252,9 @@ namespace Frosty.Core.IO
             overrideSettings = inOverrideSettings;
         }
 
-        public void WriteProject(FrostyProject project, bool editorLaunch, CancellationToken cancelToken)
+        public void WriteProject(FrostyProject project, bool editorLaunch, CancellationToken cancelToken, bool hashAdded = false, bool mergeWSTeamData = true)
         {
+            App.Logger.Log(hashAdded.ToString());
             Write(FrostyMod.Magic);
             Write(FrostyMod.Version);
             Write(0xDEADBEEFDEADBEEF);
@@ -300,6 +302,7 @@ namespace Frosty.Core.IO
             }
 
             // ebx
+            Dictionary<string, int> handlerTypesSaved = new Dictionary<string, int>();
             foreach (EbxAssetEntry entry in App.AssetManager.EnumerateEbx(modifiedOnly: true))
             {
                 if (entry.IsDirectlyModified)
@@ -329,18 +332,36 @@ namespace Frosty.Core.IO
 
                     if (entry.HasModifiedData && !entry.IsImaginary)
                     {
+                        bool isHashing = (hashAdded && entry.IsAdded && App.AssetManager.GetBundleId("win32/" + entry.Name) == -1 && App.AssetManager.GetBundleId(entry.Name) == -1 && App.AssetManager.GetResEntry(entry.Name) == null && !new List<string> { 
+                            "NetworkRegistryAsset", "MeshVariationDatabase", "WSSoldierCustomizationKitAsset", "WSVehicleCustomizationKitAsset" }.Contains(entry.Type));
+                        string ebxName = entry.Name;
+                        if (isHashing)
+                        {
+                            entry.Name = entry.Guid.ToString();
+                            ((dynamic)App.AssetManager.GetEbx(entry).RootObject).Name = entry.Guid.ToString();
+                        }
+
                         ICustomActionHandler actionHandler = App.PluginManager.GetCustomHandler(entry.Type);
-                        if (actionHandler != null && !entry.IsAdded)  //if (actionHandler != null && (!entry.IsAdded || actionHandler.ModifiesAddedAssets == true))
+                        if (actionHandler != null && !entry.IsAdded && !(!mergeWSTeamData && entry.Type.ToLower() == "wsteamdata"))  //if (actionHandler != null && (!entry.IsAdded || actionHandler.ModifiesAddedAssets == true))
                         {
                             // use custom action handler to save asset to mod
                             actionHandler.SaveToMod(this, entry);
-                            App.Logger.Log("Handler Saved: " + entry.Name);
+                            //App.Logger.Log("Handler Saved: " + entry.Name);
+                            if (handlerTypesSaved.ContainsKey(entry.Type))
+                                handlerTypesSaved[entry.Type]++;
+                            else
+                                handlerTypesSaved.Add(entry.Type, 1);
                         }
                         else
                         {
                             // save as regular asset
                             AddResource(new EbxResource(entry, manifest));
                         }
+                        if (isHashing)
+                        {
+                            entry.Name = ebxName;
+                            ((dynamic)App.AssetManager.GetEbx(entry).RootObject).Name = ebxName;
+                        } 
                     }
                     else
                     {
@@ -349,6 +370,10 @@ namespace Frosty.Core.IO
                 }
 
                 cancelToken.ThrowIfCancellationRequested();
+            }
+            if (handlerTypesSaved.Count > 1)
+            {
+                App.Logger.Log("Saved the following handler types:\n" + string.Join("\n", handlerTypesSaved.ToList().Select(kvp => $"{kvp.Key}: {kvp.Value}")));
             }
 
             // res

@@ -590,6 +590,8 @@ namespace FrostySdk.Managers
 
         private List<SuperBundleEntry> superBundles = new List<SuperBundleEntry>();
         private List<BundleEntry> bundles = new List<BundleEntry>();
+
+
         private Dictionary<string, EbxAssetEntry> ebxList = new Dictionary<string, EbxAssetEntry>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, ResAssetEntry> resList = new Dictionary<string, ResAssetEntry>();
         private Dictionary<Guid, ChunkAssetEntry> chunkList = new Dictionary<Guid, ChunkAssetEntry>();

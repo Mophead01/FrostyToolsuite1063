@@ -53,7 +53,8 @@ namespace FrostyEditor.Commands
                     {
                         try
                         {
-                            mainWin.ExportMod(mainWin.Project.GetModSettings(), filename, false, cancelToken.Token);
+                            var settings = mainWin.Project.GetModSettings();
+                            mainWin.ExportMod(mainWin.Project.GetModSettings(), filename, false, cancelToken.Token, settings.HashAddedAssets);
                         }
                         catch (OperationCanceledException)
                         {

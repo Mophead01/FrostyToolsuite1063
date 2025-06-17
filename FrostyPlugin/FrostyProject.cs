@@ -695,11 +695,11 @@ namespace Frosty.Core
             return modSettings;
         }
 
-        public void WriteToMod(string filename, ModSettings overrideSettings, bool editorLaunch, CancellationToken cancelToken)
+        public void WriteToMod(string filename, ModSettings overrideSettings, bool editorLaunch, CancellationToken cancelToken, bool hashAdded = false, bool mergeWSTeamData = true)
         {
             using (FrostyModWriter writer = new FrostyModWriter(new FileStream(filename, FileMode.Create), overrideSettings))
             {
-                writer.WriteProject(this, editorLaunch, cancelToken);
+                writer.WriteProject(this, editorLaunch, cancelToken, hashAdded, mergeWSTeamData);
             }
         }
 

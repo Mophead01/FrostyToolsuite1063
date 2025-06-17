@@ -122,6 +122,7 @@ namespace Frosty.Core.Controls
             RegEx,
             Type,
             Id,
+            Guid,
             Hash
         }
 
@@ -755,6 +756,7 @@ namespace Frosty.Core.Controls
                     case FilterCommandType.RegEx: nextRetCode = System.Text.RegularExpressions.Regex.IsMatch(inText, filterData.Text); break;
                     case FilterCommandType.Type: nextRetCode = type.Equals(filterData.Text, StringComparison.OrdinalIgnoreCase); break;
                     case FilterCommandType.Id:
+                    case FilterCommandType.Guid:
                         if (inEntry is EbxAssetEntry entry)
                         {
                             nextRetCode = entry.Guid.Equals(new Guid(filterData.Text));
