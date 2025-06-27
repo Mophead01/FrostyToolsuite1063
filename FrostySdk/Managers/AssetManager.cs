@@ -1426,6 +1426,7 @@ namespace FrostySdk.Managers
                 return;
 
             EbxAssetEntry entry = ebxList[name];
+            entry.IsImaginary = false;
 
             if (entry.ModifiedEntry == null)
             {

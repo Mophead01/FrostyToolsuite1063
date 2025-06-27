@@ -622,15 +622,17 @@ namespace FrostyEditor
                 //  Execute kyber_cli.exe
                 //
                 int randomNumber = random.Next();
-                string cliCommand = (KyberSettings.FrontendLaunch ? "start_game" : "start_server") + $" --module-branch=feat/debug-ui --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\"" + (KyberSettings.DebugMode ? " --verbose --debug" : "");
+                string cliCommand = (KyberSettings.FrontendLaunch ? "start_game" : "start_server") + $" --module-branch=main --raw-mods \"{$@"{basePath}/Kyber-Launch.json"}\"" + (KyberSettings.DebugMode ? " --verbose --debug" : "");
                 if (!KyberSettings.FrontendLaunch)
                     cliCommand += $" --server-password \"Mophead{randomNumber}\" --no-dedicated --server-name \"Test\" --map \"{KyberSettings.Level}\" --mode \"{KyberSettings.GameMode}\" --startup-commands \"{$@"{basePath}/Kyber-Commands.txt"}\"";
                 App.Logger.Log(cliCommand);
 
                 ProcessStartInfo psi = new ProcessStartInfo(KyberSettings.CliDirectory);
                 psi.EnvironmentVariables["KYBER_ONLINE_MODE"] = "0";
+                psi.EnvironmentVariables["KYBER_ALLOW_DEDICATED"] = "1";
                 if (KyberSettings.DebugMode)
                 {
+                    psi.EnvironmentVariables["KYBER_PROPERTY_DEBUG"] = "1";
                     psi.EnvironmentVariables["KYBER_LOG_LEVEL"] = "debug";
                     psi.EnvironmentVariables["MAXIMA_LAUNCH_ARGS"] = "-Kyber.RenderPropertyDebug true";
                 }

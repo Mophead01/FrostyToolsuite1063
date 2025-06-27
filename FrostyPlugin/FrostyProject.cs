@@ -1979,7 +1979,7 @@ namespace Frosty.Core
             public BundleJson(BundleEntry bEntry)
             {
                 OriginalName = bEntry.Name;
-                SuperBundle = App.AssetManager.GetSuperBundle(bEntry.SuperBundleId).Name;
+                SuperBundle = App.AssetManager.GetSuperBundle(bEntry.SuperBundleId) != null ? App.AssetManager.GetSuperBundle(bEntry.SuperBundleId).Name : "null super bundle";
                 BundleType = bEntry.Type;
                 Blueprint = bEntry.Blueprint != null ? bEntry.Blueprint.Guid : Guid.Empty;
             }
