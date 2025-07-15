@@ -1273,6 +1273,27 @@ namespace Frosty.Core
                         modSettings.Version = settings.Version != null ? settings.Version : "";
                     }
 
+                    string iconName = folderName + @"/ModIcon.png";
+                    if (File.Exists(iconName))
+                    {
+                        using (NativeReader imgReader = new NativeReader(new FileStream(iconName, FileMode.Open)))
+                        {
+                            modSettings.Icon = imgReader.ReadBytes((int)imgReader.Length);
+                        }
+                    }
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        string screenshotName = folderName + string.Format(@"/ModScreenshot{0}.png", i + 1);
+                        if (File.Exists(screenshotName))
+                        {
+                            using (NativeReader imgReader = new NativeReader(new FileStream(screenshotName, FileMode.Open)))
+                            {
+                                modSettings.SetScreenshot(i, imgReader.ReadBytes((int)imgReader.Length));
+                            }
+                        }
+                    }
+
 
 
                     Dictionary<BundleEntry, Guid> bundlesToAssignBlueprints = new Dictionary<BundleEntry, Guid>();

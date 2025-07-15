@@ -656,7 +656,7 @@ namespace DuplicationPlugin
 
         public class DuplicateAssetExtension
         {
-            private Random rand = new Random();
+            private static Random rand = new Random();
             public virtual string AssetType => null;
 
             public virtual EbxAssetEntry DuplicateAsset(EbxAssetEntry entry, string newName, bool createNew, Type newType)

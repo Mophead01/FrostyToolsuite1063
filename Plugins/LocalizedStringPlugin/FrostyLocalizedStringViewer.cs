@@ -489,8 +489,8 @@ namespace LocalizedStringPlugin
                         {
                             string str = db.GetString(stringId);
 
-                            str = str.Replace("\r", "");
-                            str = str.Replace("\n", " ");
+                            str = str.Replace("\r", "\\r");
+                            str = str.Replace("\n", "\\n");
                             str = str.Replace("\"", "\"\"");
 
                             writer.WriteLine(stringId.ToString("X8") + ",\"" + str + "\"");
@@ -519,6 +519,8 @@ namespace LocalizedStringPlugin
                             string line = reader.ReadLine();
                             uint hash = uint.Parse(line.Substring(0, 8), System.Globalization.NumberStyles.HexNumber);
                             string s = line.Substring(10, line.Length - 11);
+                            s = s.Replace("\\r", "\r");
+                            s = s.Replace("\\n", "\n");
                             if (stringIds.Contains(hash) && s != db.GetString(hash))
                             {
                                 db.SetString(hash, s);

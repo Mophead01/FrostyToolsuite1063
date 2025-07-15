@@ -3,6 +3,7 @@ using Frosty.Core;
 using Frosty.Core.Controls;
 using Frosty.Core.Sdk.AnthemDemo;
 using Frosty.Core.Windows;
+using Frosty.Hash;
 using FrostySdk;
 using FrostySdk.Ebx;
 using FrostySdk.IO;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -24,6 +26,7 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using WaveFormRendererLib;
 using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 using static System.Windows.Forms.LinkLabel;
@@ -66,7 +69,7 @@ namespace EbxToXmlPlugin
                             string fullPath = outDir + "/" + entry.Path + "/";
 
                             string filename = entry.Filename + ".xml";
-                            filename = string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+                            filename = string.Concat(filename.Split(System.IO.Path.GetInvalidFileNameChars()));
 
                             if (File.Exists(fullPath + filename))
                                 continue;
@@ -122,7 +125,7 @@ namespace EbxToXmlPlugin
                             string fullPath = outDir + "/" + entry.Path + "/";
 
                             string filename = entry.Filename + ".bin";
-                            filename = string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+                            filename = string.Concat(filename.Split(System.IO.Path.GetInvalidFileNameChars()));
 
                             if (File.Exists(fullPath + filename))
                                 continue;
@@ -180,7 +183,7 @@ namespace EbxToXmlPlugin
                             string fullPath = outDir + "/" + entry.Path + "/";
 
                             string filename = entry.Filename + ".chunk";
-                            filename = string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+                            filename = string.Concat(filename.Split(System.IO.Path.GetInvalidFileNameChars()));
 
                             if (File.Exists(fullPath + filename))
                                 continue;
@@ -238,7 +241,7 @@ namespace EbxToXmlPlugin
                             string fullPath = outDir + "/" + entry.Path + "/";
 
                             string filename = entry.Filename + ".res";
-                            filename = string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+                            filename = string.Concat(filename.Split(System.IO.Path.GetInvalidFileNameChars()));
 
                             if (File.Exists(fullPath + filename))
                                 continue;
@@ -1277,6 +1280,223 @@ namespace EbxToXmlPlugin
                     FrostyMessageBox.Show("Successfully exported sounds to " + outDir, "Frosty Editor");
                 }
             });
+        }
+
+        public class UpdateStringsTxtMenuExtension : MenuExtension
+        {
+            public override ImageSource Icon => new ImageSourceConverter().ConvertFromString("pack://application:,,,/EbxToXmlPlugin;component/Images/EbxToXml.png") as ImageSource;
+
+            public override string TopLevelMenuName => TopLevel;
+            public override string SubLevelMenuName => SubLevel;
+
+            public override string MenuItemName => "Update strings.txt";
+            public static bool HasProperty(object obj, string propertyName)
+            {
+                return obj.GetType().GetProperty(propertyName) != null;
+            }
+            public override RelayCommand MenuItemClicked => new RelayCommand((o) =>
+            {
+                if (!File.Exists("strings.txt"))
+                    return;
+                FrostyTaskWindow.Show("Updating Strings", "", (task) =>
+                {
+                    List<EbxAssetEntry> modifiedEbx = App.AssetManager.EnumerateEbx().Where(refEntry => refEntry.HasModifiedData).ToList();
+                    int totalCount = modifiedEbx.Count();
+                    uint idx = 0;
+
+                    HashSet<string> foundStrings = new HashSet<string>();
+                    HashSet<string> knownstrings = new HashSet<string>();
+                    List<string> existingStrings = new List<string>();
+                    Dictionary<int, string> hashToStrings = new Dictionary<int, string>();
+
+                    using (NativeReader reader = new NativeReader(new FileStream("strings.txt", FileMode.Open, FileAccess.Read)))
+                    {
+                        while (reader.Position < reader.Length)
+                        {
+                            string currentString = reader.ReadLine();
+                            int hash = Fnv1.HashString(currentString);
+                            if (!hashToStrings.ContainsKey(hash))
+                                hashToStrings.Add(hash, currentString);
+
+                            hash = Fnv1.HashString(currentString.ToLower());
+                            if (!hashToStrings.ContainsKey(hash))
+                                hashToStrings.Add(hash, currentString.ToLower());
+
+                            hash = Fnv1.HashString(currentString.ToUpper());
+                            if (!hashToStrings.ContainsKey(hash))
+                                hashToStrings.Add(hash, currentString.ToUpper());
+
+                            existingStrings.Add(currentString);
+                            knownstrings.Add(currentString);
+                            knownstrings.Add(currentString.ToLower());
+                            knownstrings.Add(currentString.ToUpper());
+
+                        }
+                    }
+
+                    void DiscoverString(CString str)
+                    {
+                        if (!knownstrings.Contains(str) && !foundStrings.Contains(str) && !str.ToString().StartsWith("0x"))
+                        {
+                            foundStrings.Add(str.ToString());
+                            int hash = Utils.HashString(str.ToString());
+                            if (!hashToStrings.ContainsKey(hash))
+                                hashToStrings.Add(hash, str.ToString());
+                        }
+                    }
+
+                    int updatedStrings = 0;
+
+                    string UpdateString(CString str)
+                    {
+                        if (str.ToString().StartsWith("0x"))
+                        {
+                            string value = str.ToString().Remove(0, 2);
+                            if (int.TryParse(value, System.Globalization.NumberStyles.HexNumber, null, out int newValue))
+                            {
+                                if (hashToStrings.ContainsKey(newValue))
+                                {
+                                    updatedStrings++;
+                                    return hashToStrings[newValue];
+                                }
+                            }
+                        }
+                        return str;
+                    }
+
+
+                    task.Update("Discovering strings");
+                    foreach (EbxAssetEntry entry in modifiedEbx)
+                    {
+                        task.Update(entry.Name, (idx++ / (double)totalCount) * 100.0d);
+                        EbxAsset modifiedAsset = App.AssetManager.GetEbx(entry);
+
+                        foreach (dynamic obj in modifiedAsset.Objects)
+                        {
+                            if (HasProperty(obj, "PropertyConnections"))
+                            {
+                                foreach (dynamic PropertyConnection in obj.PropertyConnections)
+                                {
+                                    DiscoverString(PropertyConnection.SourceField);
+                                    DiscoverString(PropertyConnection.TargetField);
+                                }
+                            }
+                            if (HasProperty(obj, "LinkConnections"))
+                            {
+                                foreach (dynamic LinkConnection in obj.LinkConnections)
+                                {
+                                    DiscoverString(LinkConnection.SourceField);
+                                    DiscoverString(LinkConnection.TargetField);
+                                }
+                            }
+                            if (HasProperty(obj, "EventConnections"))
+                            {
+                                foreach (dynamic EventConnection in obj.EventConnections)
+                                {
+                                    DiscoverString(EventConnection.SourceEvent.Name);
+                                    DiscoverString(EventConnection.TargetEvent.Name);
+                                }
+                            }
+                            if (HasProperty(obj, "Interface") && obj.Interface.Internal != null)
+                            {
+                                dynamic inter = obj.Interface.Internal;
+                                foreach (dynamic field in inter.Fields)
+                                    DiscoverString(field.Name);
+                                foreach (dynamic field in inter.InputEvents)
+                                    DiscoverString(field.Name);
+                                foreach (dynamic field in inter.OutputEvents)
+                                    DiscoverString(field.Name);
+                                foreach (dynamic field in inter.InputLinks)
+                                    DiscoverString(field.Name);
+                                foreach (dynamic field in inter.OutputLinks)
+                                    DiscoverString(field.Name);
+                            }
+                        }
+                    }
+
+                    idx = 0;
+                    task.Update("Updating strings");
+                    foreach (EbxAssetEntry entry in modifiedEbx)
+                    {
+                        task.Update(entry.Name, (idx++ / (double)totalCount) * 100.0d);
+                        EbxAsset modifiedAsset = App.AssetManager.GetEbx(entry);
+
+                        int curCount = updatedStrings;
+
+                        foreach (dynamic obj in modifiedAsset.Objects)
+                        {
+                            if (HasProperty(obj, "PropertyConnections"))
+                            {
+                                foreach (dynamic PropertyConnection in obj.PropertyConnections)
+                                {
+                                    PropertyConnection.SourceField = UpdateString(PropertyConnection.SourceField);
+                                    PropertyConnection.TargetField = UpdateString(PropertyConnection.TargetField);
+                                }
+                            }
+                            if (HasProperty(obj, "LinkConnections"))
+                            {
+                                foreach (dynamic LinkConnection in obj.LinkConnections)
+                                {
+                                    LinkConnection.SourceField = UpdateString(LinkConnection.SourceField);
+                                    LinkConnection.TargetField = UpdateString(LinkConnection.TargetField);
+                                }
+                            }
+                            if (HasProperty(obj, "EventConnections"))
+                            {
+                                foreach (dynamic EventConnection in obj.EventConnections)
+                                {
+                                    EventConnection.SourceEvent.Name = UpdateString(EventConnection.SourceEvent.Name);
+                                    EventConnection.TargetEvent.Name = UpdateString(EventConnection.TargetEvent.Name);
+                                }
+                            }
+                            if (HasProperty(obj, "Interface") && obj.Interface.Internal != null)
+                            {
+                                dynamic inter = obj.Interface.Internal;
+                                foreach (dynamic field in inter.Fields)
+                                    field.Name = UpdateString(field.Name);
+                                foreach (dynamic field in inter.InputEvents)
+                                    field.Name = UpdateString(field.Name);
+                                foreach (dynamic field in inter.OutputEvents)
+                                    field.Name = UpdateString(field.Name);
+                                foreach (dynamic field in inter.InputLinks)
+                                    field.Name = UpdateString(field.Name);
+                                foreach (dynamic field in inter.OutputLinks)
+                                    field.Name = UpdateString(field.Name);
+                            }
+                        }
+                        if (curCount != updatedStrings)
+                            App.AssetManager.ModifyEbx(entry.Name, modifiedAsset);
+                    }
+
+                    App.Logger.Log("Found {0} new strings:\n{1}", foundStrings.Count, string.Join("\n", foundStrings));
+                    App.Logger.Log("Updated {0} detected hashes", updatedStrings);
+
+                    if (foundStrings.Count > 0)
+                    {
+                        using (StreamWriter writer = new StreamWriter("strings.txt"))
+                        {
+                            writer.WriteLine("#");
+                            foreach (string line in foundStrings.ToList().OrderBy(str => str))
+                            {
+                                if (line == "#")
+                                    continue;
+                                writer.WriteLine(line);
+                            }
+                            foreach (string line in existingStrings)
+                            {
+                                if (line == "#")
+                                    continue;
+                                writer.WriteLine(line);
+                            }
+                        }
+                        Utils.LoadStringList("strings.txt", null);
+                        App.Logger.Log("Updated strings.txt with {0} new strings", foundStrings.Count);
+                    }
+                });
+
+                //FrostyMessageBox.Show("Successfully exported EBX to " + outDir, "Frosty Editor");
+            });
+
         }
     }
 }

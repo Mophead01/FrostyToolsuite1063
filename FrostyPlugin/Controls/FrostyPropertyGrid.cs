@@ -666,7 +666,7 @@ namespace Frosty.Core.Controls
         public void ExpandOrCollapseAll(bool expand, int expandCount = -1)
         {
             foreach (var item in Children)
-                if (!item.IsHidden && expandCount == -1 || expandCount > 0)
+                if (!item.IsHidden && (expandCount < 0 || expandCount > 0))
                     item.ExpandOrCollapseAll(expand, expandCount - 1);
             IsExpanded = expand;
         }

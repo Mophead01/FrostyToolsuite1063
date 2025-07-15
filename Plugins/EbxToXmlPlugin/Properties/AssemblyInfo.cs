@@ -36,5 +36,6 @@ using System.Windows;
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ObjectTypeMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ClassPortsMenuExtension))]
 [assembly: RegisterMenuExtension(typeof(BulkExporting.ExportAllSoundWavesMenuExtension))]
+[assembly: RegisterMenuExtension(typeof(BulkExporting.UpdateStringsTxtMenuExtension))]
 
 
